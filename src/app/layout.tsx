@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Live Love Light — Handcrafted Scented Candles',
     description: 'Light Something Beautiful. Premium handcrafted botanical soy wax candles.',
-    images: ['/images/05-lighting-moment.png'],
+    images: ['/images/logo.jpeg'],
     type: 'website',
   },
 };

@@ -8,19 +8,19 @@ import { Flame, Sparkles, Heart, ShieldCheck, ArrowRight } from 'lucide-react';
 export default function BrandStorySection() {
   const pillars = [
     {
-      title: 'Artisanal Hand-Pouring',
+      title: 'Artisanal Hand-Sculpting',
       desc: 'Each candle is meticulously hand-sculpted and poured in small batches to preserve fine sculptural detail.',
-      image: '/images/03-pouring-with-care.png'
+      image: '/images/lotus - sandlewood.jpeg'
     },
     {
-      title: 'Prestige Fragrance Oils',
+      title: 'Prestige Fragrance Blends',
       desc: 'Infused with fine fragrance oils including authentic Mysore sandalwood, Arabian royal oud, and blooming jasmine.',
-      image: '/images/02-fragrance-oils.png'
+      image: '/images/peony - jamsine & Royal oud.jpeg'
     },
     {
       title: '100% Botanical Soy Wax',
       desc: 'Clean-burning, soot-free botanical waxes safe for your home, loved ones, and mindful sanctuaries.',
-      image: '/images/04-beautiful-details.png'
+      image: '/images/daisy - jasmine.jpeg'
     }
   ];
 

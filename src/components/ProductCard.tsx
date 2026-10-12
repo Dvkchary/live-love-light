@@ -24,7 +24,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const hasFlipkart = Boolean(product.marketplaces?.flipkart && product.marketplaces.flipkart.trim().length > 0);
   const hasMeesho = Boolean(product.marketplaces?.meesho && product.marketplaces.meesho.trim().length > 0);
 
-  const mainImage = product.images?.[0] || '/images/01-handcrafted-candles.png';
+  const mainImage = product.images?.[0] || '/images/logo.jpeg';
 
   return (
     <div className="group bg-white rounded-2xl border border-[#EAE3D9] overflow-hidden luxury-card-shadow transition-all duration-300 flex flex-col h-full relative">

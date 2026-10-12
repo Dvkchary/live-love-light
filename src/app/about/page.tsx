@@ -48,8 +48,8 @@ export default function AboutPage() {
             </div>
             <div className="relative aspect-4/3 rounded-3xl overflow-hidden shadow-xl border border-[#EAE3D9] bg-[#F6F1EC]">
               <Image
-                src="/images/01-handcrafted-candles.png"
-                alt="Handcrafted candles"
+                src="/images/teddy - Royal oud.jpeg"
+                alt="Teddy Candle Handcrafted"
                 fill
                 className="object-cover"
               />
@@ -59,8 +59,8 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center md:flex-row-reverse">
             <div className="relative aspect-4/3 rounded-3xl overflow-hidden shadow-xl border border-[#EAE3D9] bg-[#F6F1EC] order-2 md:order-1">
               <Image
-                src="/images/02-fragrance-oils.png"
-                alt="Fragrance oils"
+                src="/images/jar - rayal oud.jpeg"
+                alt="Amber Jar Royal Oud Candle"
                 fill
                 className="object-cover"
               />

@@ -72,8 +72,8 @@ export default function Hero() {
               {/* Main Candle Photo Frame */}
               <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-[#F6F1EC]">
                 <Image
-                  src="/images/05-lighting-moment.png"
-                  alt="Live Love Light — Handcrafted Candle Ambiance"
+                  src="/images/jar - rayal oud.jpeg"
+                  alt="Live Love Light — Amber Glass Jar Candle"
                   width={600}
                   height={650}
                   priority
@@ -104,7 +104,7 @@ export default function Hero() {
               <div className="hidden sm:flex absolute -top-4 -left-6 bg-white rounded-xl p-3 shadow-xl border border-[#EAE3D9] items-center gap-3">
                 <div className="w-10 h-10 rounded-lg overflow-hidden bg-[#F6F1EC] shrink-0">
                   <Image
-                    src="/images/teddy-royal-oud.png"
+                    src="/images/teddy - Royal oud.jpeg"
                     alt="Teddy Candle"
                     width={40}
                     height={40}

@@ -12,8 +12,8 @@ import {
   orderBy
 } from 'firebase/firestore';
 
-const STORAGE_KEY_PRODUCTS = 'lll_products_v1';
-const STORAGE_KEY_CATEGORIES = 'lll_categories_v1';
+const STORAGE_KEY_PRODUCTS = 'lll_products_v2';
+const STORAGE_KEY_CATEGORIES = 'lll_categories_v2';
 
 // In-memory cache for fast SSR / hydration
 let memoryProducts: Product[] = [...INITIAL_PRODUCTS];
@@ -24,13 +24,15 @@ export function getLocalProducts(): Product[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_PRODUCTS);
     if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      const parsed: Product[] = JSON.parse(raw);
+      // If legacy images (like 01-handcrafted-candles) are present, refresh to given images
+      const hasOldImages = parsed.some(p => p.images?.some(img => img.includes('.png')));
+      if (Array.isArray(parsed) && parsed.length > 0 && !hasOldImages) {
         memoryProducts = parsed;
         return parsed;
       }
     }
-    // initialize local storage with default
+    // initialize local storage with default given products
     localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(INITIAL_PRODUCTS));
   } catch (err) {
     console.warn('Error reading local products storage', err);

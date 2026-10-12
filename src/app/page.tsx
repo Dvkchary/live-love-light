@@ -128,14 +128,14 @@ export default function HomePage() {
       });
   }, [products, filters]);
 
-  // Category thumbnail images mapping
+  // Category thumbnail images mapping (using only the given authentic images)
   const categoryImages: Record<string, string> = {
-    'Teddy Candles': '/images/teddy-royal-oud.png',
-    'Flower Candles': '/images/daisy-jasmine.png',
-    'Rose Candles': '/images/peony-jasmine-royal-oud.png',
-    'Fragrance Candles': '/images/jar-royal-oud.png',
-    'Decorative Candles': '/images/03-pouring-with-care.png',
-    'Gift Collections': '/images/collection-grid.png',
+    'Teddy Candles': '/images/teddy - Royal oud.jpeg',
+    'Flower Candles': '/images/daisy - jasmine.jpeg',
+    'Rose Candles': '/images/peony - jamsine & Royal oud.jpeg',
+    'Fragrance Candles': '/images/jar - rayal oud.jpeg',
+    'Decorative Candles': '/images/lotus - sandlewood.jpeg',
+    'Gift Collections': '/images/logo.jpeg',
   };
 
   return (
@@ -168,7 +168,7 @@ export default function HomePage() {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
             {availableCategories.map(cat => {
-              const img = categoryImages[cat] || '/images/01-handcrafted-candles.png';
+              const img = categoryImages[cat] || '/images/logo.jpeg';
               const count = products.filter(p => p.active && p.category === cat).length;
               const isSelected = filters.category === cat;
 

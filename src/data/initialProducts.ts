@@ -17,9 +17,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     currency: 'INR',
     category: 'Teddy Candles',
     images: [
-      '/images/teddy-royal-oud.png',
-      '/images/04-beautiful-details.png',
-      '/images/03-pouring-with-care.png'
+      '/images/teddy - Royal oud.jpeg'
     ],
     marketplaces: {
       amazon: 'https://www.amazon.in/dp/example-teddy-candle',
@@ -52,9 +50,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     currency: 'INR',
     category: 'Flower Candles',
     images: [
-      '/images/daisy-jasmine.png',
-      '/images/01-handcrafted-candles.png',
-      '/images/05-lighting-moment.png'
+      '/images/daisy - jasmine.jpeg'
     ],
     marketplaces: {
       amazon: 'https://www.amazon.in/dp/example-daisy-jasmine',
@@ -79,17 +75,15 @@ export const INITIAL_PRODUCTS: Product[] = [
     fragrance: 'Velvet Rose & Royal Oud',
     fragranceNotes: {
       top: 'Damask Rose Petals, Pink Peppercorn',
-      middle: 'Velvety Peony, Geranium Blossom',
-      base: 'Dark Smoky Oud, Warm Praline'
+      middle: 'Velvety Peony, Night Jasmine',
+      base: 'Dark Smoky Royal Oud, Warm Praline'
     },
     price: 449,
     originalPrice: 649,
     currency: 'INR',
     category: 'Rose Candles',
     images: [
-      '/images/peony-jasmine-royal-oud.png',
-      '/images/04-beautiful-details.png',
-      '/images/01-handcrafted-candles.png'
+      '/images/peony - jamsine & Royal oud.jpeg'
     ],
     marketplaces: {
       amazon: 'https://www.amazon.in/dp/example-peony-rose',
@@ -122,9 +116,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     currency: 'INR',
     category: 'Flower Candles',
     images: [
-      '/images/lotus-sandalwood.png',
-      '/images/05-lighting-moment.png',
-      '/images/02-fragrance-oils.png'
+      '/images/lotus - sandlewood.jpeg'
     ],
     marketplaces: {
       amazon: 'https://www.amazon.in/dp/example-lotus-candle',
@@ -157,9 +149,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     currency: 'INR',
     category: 'Fragrance Candles',
     images: [
-      '/images/jar-royal-oud.png',
-      '/images/02-fragrance-oils.png',
-      '/images/05-lighting-moment.png'
+      '/images/jar - rayal oud.jpeg'
     ],
     marketplaces: {
       amazon: 'https://www.amazon.in/dp/example-amber-jar-oud',
@@ -175,76 +165,6 @@ export const INITIAL_PRODUCTS: Product[] = [
     dimensions: '8 x 8 x 9.5 cm',
     createdAt: '2026-01-20T10:00:00Z',
     updatedAt: '2026-01-20T10:00:00Z'
-  },
-  {
-    id: 'gift-collection-006',
-    name: 'Artisan Handcrafted Gift Box Collection',
-    slug: 'artisan-gift-box-collection',
-    description: 'A curated luxury gift set featuring our signature sculpted floral and teddy candles presented in a warm gold-embossed gift box with silk ribbon. The ultimate festive, wedding, or anniversary present.',
-    fragrance: 'Assorted Luxe Blends (4 Scents)',
-    fragranceNotes: {
-      top: 'Blooming Jasmine, Mysore Sandalwood',
-      middle: 'Velvet Rose, Royal Oud',
-      base: 'Golden Amber & French Vanilla'
-    },
-    price: 1299,
-    originalPrice: 1899,
-    currency: 'INR',
-    category: 'Gift Collections',
-    images: [
-      '/images/collection-grid.png',
-      '/images/01-handcrafted-candles.png',
-      '/images/04-beautiful-details.png'
-    ],
-    marketplaces: {
-      amazon: 'https://www.amazon.in/dp/example-gift-collection',
-      flipkart: 'https://www.flipkart.com/example-gift-collection',
-      meesho: 'https://www.meesho.com/example-gift-collection'
-    },
-    featured: true,
-    active: true,
-    inStock: true,
-    burnTimeHours: 120,
-    waxType: '100% Botanical Soy Wax',
-    weightGrams: 750,
-    dimensions: '22 x 18 x 9 cm',
-    createdAt: '2026-01-22T10:00:00Z',
-    updatedAt: '2026-01-22T10:00:00Z'
-  },
-  {
-    id: 'decorative-candle-007',
-    name: 'Artisan Sculpted Heritage Pillar Candle',
-    slug: 'artisan-sculpted-heritage-candle',
-    description: 'An architectural statement piece candle poured with precision micro-layering. Infused with soft vanilla orchid and cashmere wood to add tactile luxury to dining tables and mantels.',
-    fragrance: 'Vanilla Orchid & Cashmere Wood',
-    fragranceNotes: {
-      top: 'White Peach, Almond Blossom',
-      middle: 'Vanilla Orchid, Heliotrope',
-      base: 'Cashmere Wood, Warm Musk'
-    },
-    price: 429,
-    originalPrice: 599,
-    currency: 'INR',
-    category: 'Decorative Candles',
-    images: [
-      '/images/03-pouring-with-care.png',
-      '/images/01-handcrafted-candles.png',
-      '/images/04-beautiful-details.png'
-    ],
-    marketplaces: {
-      amazon: 'https://www.amazon.in/dp/example-heritage-pillar',
-      flipkart: '',
-      meesho: ''
-    },
-    featured: false,
-    active: true,
-    inStock: true,
-    burnTimeHours: 48,
-    waxType: '100% Botanical Soy Wax',
-    weightGrams: 260,
-    dimensions: '7 x 7 x 12 cm',
-    createdAt: '2026-01-25T10:00:00Z',
-    updatedAt: '2026-01-25T10:00:00Z'
   }
 ];
 
@@ -252,7 +172,5 @@ export const INITIAL_CATEGORIES = [
   'Teddy Candles',
   'Flower Candles',
   'Rose Candles',
-  'Fragrance Candles',
-  'Decorative Candles',
-  'Gift Collections'
+  'Fragrance Candles'
 ];

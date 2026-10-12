@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Flame, Heart, Sparkles, Mail, MapPin, Phone } from 'lucide-react';
 
 export default function Footer() {
@@ -11,18 +12,23 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-[#2E241E]">
           {/* Brand Info */}
           <div className="lg:col-span-2 space-y-4">
-            <Link href="/" className="inline-flex flex-col">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#9A7513] via-[#C59B27] to-[#DFBE58] flex items-center justify-center">
-                  <Flame className="w-4 h-4 text-[#1D1714] fill-current" />
-                </div>
+            <Link href="/" className="inline-flex items-center gap-3">
+              <div className="relative w-12 h-12 rounded-full overflow-hidden border border-[#3A2D24] shadow-md shrink-0 bg-white">
+                <Image
+                  src="/images/logo.jpeg"
+                  alt="Live Love Light Logo"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <div className="flex flex-col">
                 <span className="font-serif-luxury text-2xl font-bold tracking-wider text-white">
                   LIVE LOVE LIGHT
                 </span>
+                <span className="text-[9px] tracking-[0.28em] text-[#DFBE58] font-semibold uppercase mt-0.5">
+                  LIGHT SOMETHING BEAUTIFUL
+                </span>
               </div>
-              <span className="text-[9px] tracking-[0.28em] text-[#DFBE58] font-semibold uppercase mt-0.5">
-                LIGHT SOMETHING BEAUTIFUL
-              </span>
             </Link>
 
             <p className="text-xs text-[#DECDBA] leading-relaxed max-w-sm">

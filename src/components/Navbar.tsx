@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/lib/auth-context';
 import {
   Search,
@@ -52,20 +53,26 @@ export default function Navbar({ onSearchClick, searchQuery = '', onSearchChange
               </button>
             </div>
 
-            {/* Brand Identity / Logo */}
+            {/* Brand Identity / Official Logo */}
             <div className="flex-1 lg:flex-none text-center lg:text-left">
-              <Link href="/" className="inline-flex flex-col items-center lg:items-start group">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#9A7513] via-[#C59B27] to-[#DFBE58] flex items-center justify-center shadow-sm">
-                    <Flame className="w-4 h-4 text-[#FCFBF7] fill-white" />
-                  </div>
-                  <span className="font-serif-luxury text-2xl sm:text-3xl font-bold tracking-wider text-[#231B15] group-hover:text-[#9A7513] transition-colors">
+              <Link href="/" className="inline-flex items-center gap-3 group">
+                <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border border-[#EAE3D9] shadow-xs shrink-0 bg-white">
+                  <Image
+                    src="/images/logo.jpeg"
+                    alt="Live Love Light Logo"
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform"
+                    priority
+                  />
+                </div>
+                <div className="flex flex-col text-left">
+                  <span className="font-serif-luxury text-xl sm:text-2xl font-bold tracking-wider text-[#231B15] group-hover:text-[#9A7513] transition-colors leading-tight">
                     LIVE LOVE LIGHT
                   </span>
+                  <span className="text-[8px] sm:text-[9px] tracking-[0.25em] text-[#786C63] font-semibold uppercase">
+                    LIGHT SOMETHING BEAUTIFUL
+                  </span>
                 </div>
-                <span className="text-[9px] sm:text-[10px] tracking-[0.28em] text-[#786C63] font-semibold uppercase -mt-0.5">
-                  LIGHT SOMETHING BEAUTIFUL
-                </span>
               </Link>
             </div>
 

@@ -71,7 +71,7 @@ export default function AdminPage() {
   const [formBaseNotes, setFormBaseNotes] = useState('');
   const [formPrice, setFormPrice] = useState<number>(399);
   const [formOriginalPrice, setFormOriginalPrice] = useState<number>(599);
-  const [formImages, setFormImages] = useState<string>('/images/teddy-royal-oud.png');
+  const [formImages, setFormImages] = useState<string>('/images/teddy - Royal oud.jpeg');
   const [formAmazonUrl, setFormAmazonUrl] = useState('');
   const [formFlipkartUrl, setFormFlipkartUrl] = useState('');
   const [formMeeshoUrl, setFormMeeshoUrl] = useState('');
@@ -134,7 +134,7 @@ export default function AdminPage() {
     setFormBaseNotes('');
     setFormPrice(399);
     setFormOriginalPrice(599);
-    setFormImages('/images/teddy-royal-oud.png');
+    setFormImages('/images/teddy - Royal oud.jpeg');
     setFormAmazonUrl('');
     setFormFlipkartUrl('');
     setFormMeeshoUrl('');
@@ -237,7 +237,7 @@ export default function AdminPage() {
       originalPrice: Number(formOriginalPrice) || undefined,
       currency: 'INR',
       category: formCategory,
-      images: imageArray.length > 0 ? imageArray : ['/images/01-handcrafted-candles.png'],
+      images: imageArray.length > 0 ? imageArray : ['/images/logo.jpeg'],
       marketplaces: {
         amazon: formAmazonUrl.trim() || undefined,
         flipkart: formFlipkartUrl.trim() || undefined,
@@ -437,7 +437,7 @@ export default function AdminPage() {
                       <td className="py-3 px-4 flex items-center gap-3">
                         <div className="w-12 h-12 rounded-lg bg-[#F6F1EC] overflow-hidden shrink-0 relative border border-[#EAE3D9]">
                           <Image
-                            src={p.images[0] || '/images/01-handcrafted-candles.png'}
+                            src={p.images[0] || '/images/logo.jpeg'}
                             alt={p.name}
                             fill
                             className="object-cover"
@@ -747,7 +747,7 @@ export default function AdminPage() {
                   <div className="bg-white rounded-2xl border border-[#EAE3D9] p-4 shadow-lg space-y-3">
                     <div className="aspect-square rounded-xl overflow-hidden bg-[#F6F1EC] relative">
                       <Image
-                        src={formImages.split(',')[0]?.trim() || '/images/01-handcrafted-candles.png'}
+                        src={formImages.split(',')[0]?.trim() || '/images/logo.jpeg'}
                         alt={formName || 'Candle Preview'}
                         fill
                         className="object-cover"
@@ -943,11 +943,11 @@ export default function AdminPage() {
                     type="text"
                     value={formImages}
                     onChange={e => setFormImages(e.target.value)}
-                    placeholder="/images/teddy-royal-oud.png, /images/04-beautiful-details.png"
+                    placeholder="/images/teddy - Royal oud.jpeg"
                     className="w-full bg-white text-sm text-[#231B15] p-2.5 rounded-xl border border-[#EAE3D9]"
                   />
                   <p className="text-[10px] text-[#786C63] mt-1">
-                    Available authentic assets: /images/teddy-royal-oud.png, /images/daisy-jasmine.png, /images/lotus-sandalwood.png, /images/peony-jasmine-royal-oud.png, /images/jar-royal-oud.png, /images/collection-grid.png
+                    Available authentic assets: /images/teddy - Royal oud.jpeg, /images/daisy - jasmine.jpeg, /images/lotus - sandlewood.jpeg, /images/peony - jamsine & Royal oud.jpeg, /images/jar - rayal oud.jpeg, /images/logo.jpeg
                   </p>
                 </div>
 

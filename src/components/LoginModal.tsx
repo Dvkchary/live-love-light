@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useAuth } from '@/lib/auth-context';
 import {
   X,
@@ -133,11 +134,16 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
         {/* Header with Luxury Brand Banner */}
         <div className="bg-gradient-to-b from-[#F6F1EC] to-[#FCFBF7] p-6 text-center border-b border-[#EAE3D9]">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-[#9A7513] to-[#DFBE58] text-white shadow-md mb-3">
-            <Flame className="w-6 h-6 fill-white" />
+          <div className="relative w-16 h-16 rounded-full overflow-hidden border border-[#EAE3D9] shadow-md mx-auto mb-3 bg-white">
+            <Image
+              src="/images/logo.jpeg"
+              alt="Live Love Light Logo"
+              fill
+              className="object-cover"
+            />
           </div>
           <h3 className="font-serif-luxury text-2xl font-bold text-[#231B15]">
-            Welcome to Live Love Light
+            Live Love Light
           </h3>
           <p className="text-xs text-[#786C63] mt-1 font-medium tracking-wide">
             LIGHT SOMETHING BEAUTIFUL

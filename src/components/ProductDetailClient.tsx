@@ -152,7 +152,7 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
             <div className="lg:col-span-6 space-y-4">
               <div className="relative aspect-square w-full rounded-3xl overflow-hidden bg-[#F6F1EC] border border-[#EAE3D9] shadow-xl">
                 <Image
-                  src={selectedImage || product.images[0] || '/images/01-handcrafted-candles.png'}
+                  src={selectedImage || product.images[0] || '/images/logo.jpeg'}
                   alt={product.name}
                   fill
                   priority
