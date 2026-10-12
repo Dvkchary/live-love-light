@@ -1,26 +1,64 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-ivory: #FCFBF7;
+    --color-cream: #F6F1EC;
+    --color-cream-subtle: #FDFCF9;
+    --color-beige: #EBE3D7;
+    --color-beige-dark: #DECDBA;
+    --color-gold: #C59B27;
+    --color-gold-light: #DFBE58;
+    --color-gold-dark: #9A7513;
+    --color-gold-soft: #F4E8C1;
+    --color-espresso: #231B15;
+    --color-espresso-light: #3D3027;
+    --color-warm-gray: #786C63;
+    --color-border-warm: #EAE3D9;
+  }
+
+  body {
+    background-color: var(--color-ivory);
+    color: var(--color-espresso);
+    font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, .font-serif-luxury {
+    font-family: var(--font-serif), 'Cormorant Garamond', Georgia, serif;
+    letter-spacing: -0.01em;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Custom scrollbar matching warm aesthetics */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #F6F1EC;
+}
+::-webkit-scrollbar-thumb {
+  background: #D9CBB8;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #C59B27;
+}
+
+/* Custom utility styles */
+.gold-gradient-text {
+  background: linear-gradient(135deg, #B58B1E 0%, #D8B244 50%, #9B7414 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.luxury-card-shadow {
+  box-shadow: 0 4px 20px -2px rgba(45, 33, 23, 0.05), 0 2px 6px -1px rgba(45, 33, 23, 0.03);
+}
+
+.luxury-card-shadow:hover {
+  box-shadow: 0 12px 32px -4px rgba(45, 33, 23, 0.1), 0 4px 12px -2px rgba(45, 33, 23, 0.06);
 }

@@ -1,0 +1,26 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.admin == true ||
+        request.auth.token.email.matches('.*@livelovelight\\.in$')
+      );
+    }
+
+    // Product images directory:
+    // Anyone can view product photos
+    // Only verified administrators can upload, replace, or delete product photographs
+    match /products/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin() &&
+                      request.resource.size < 5 * 1024 * 1024 &&
+                      request.resource.contentType.matches('image/.*');
+    }
+  }
+}

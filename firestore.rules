@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.admin == true ||
+        request.auth.token.email.matches('.*@livelovelight\\.in$')
+      );
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Products collection:
+    // Public users can read active/published products
+    // Only authorized administrators can create, update, or delete products
+    match /products/{productId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Settings collection (e.g. categories):
+    // Public can read, only admin can modify
+    match /settings/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Customer profiles:
+    // Users can only read and write their own profile
+    // Admins can read for customer service
+    match /users/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+
+    // Marketplace clicks analytics:
+    // Any visitor can record an outbound marketplace click event
+    // Only administrators can read the analytics click history
+    match /marketplace_clicks/{clickId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+  }
+}
