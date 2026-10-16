@@ -6,11 +6,9 @@ import Image from 'next/image';
 import { useAuth } from '@/lib/auth-context';
 import {
   Search,
-  Heart,
   User,
   Menu,
   X,
-  Flame,
   ShieldCheck,
   LogOut,
   Sparkles
@@ -61,6 +59,7 @@ export default function Navbar({ onSearchClick, searchQuery = '', onSearchChange
                     src="/images/logo.jpeg"
                     alt="Live Love Light Logo"
                     fill
+                    sizes="48px"
                     className="object-cover group-hover:scale-105 transition-transform"
                     priority
                   />

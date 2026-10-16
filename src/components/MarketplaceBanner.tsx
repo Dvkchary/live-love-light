@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ShoppingBag, ShieldCheck, Truck, RefreshCw, ExternalLink } from 'lucide-react';
+import { ShoppingBag, ShieldCheck, Truck, RefreshCw } from 'lucide-react';
 
 export default function MarketplaceBanner() {
   return (
@@ -15,7 +15,7 @@ export default function MarketplaceBanner() {
                 EFFORTLESS MARKETPLACE REDIRECTION
               </span>
               <h2 className="font-serif-luxury text-3xl sm:text-4xl font-bold text-white leading-tight">
-                Discover Here, Purchase on India's Favorite Platforms
+                Discover Here, Purchase on India&apos;s Favorite Platforms
               </h2>
               <p className="text-sm text-[#DECDBA] leading-relaxed max-w-xl">
                 We believe in zero payment friction. Explore our curated collections, view scent profiles and burning notes, and complete your purchase securely with your existing accounts on Amazon, Flipkart, or Meesho.

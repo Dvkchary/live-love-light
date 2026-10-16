@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Cormorant_Garamond, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
+import { ClerkProvider } from '@clerk/nextjs';
 import { AuthProvider } from '@/lib/auth-context';
 
 const cormorant = Cormorant_Garamond({
@@ -46,15 +47,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-      className={`${cormorant.variable} ${plusJakarta.variable} h-full scroll-smooth`}
+    <ClerkProvider
+      appearance={{
+        variables: {
+          colorPrimary: '#9A7513',
+          colorBackground: '#FCFBF7',
+          borderRadius: '0.75rem',
+        },
+      }}
     >
-      <body className="min-h-full flex flex-col bg-[#FCFBF7] text-[#231B15] font-sans antialiased selection:bg-[#F4E8C1] selection:text-[#231B15]">
-        <AuthProvider>
-          <div className="flex-1 flex flex-col">{children}</div>
-        </AuthProvider>
-      </body>
-    </html>
+      <html
+        lang="en"
+        className={`${cormorant.variable} ${plusJakarta.variable} h-full scroll-smooth`}
+      >
+        <body className="min-h-full flex flex-col bg-[#FCFBF7] text-[#231B15] font-sans antialiased selection:bg-[#F4E8C1] selection:text-[#231B15]">
+          <AuthProvider>
+            <div className="flex-1 flex flex-col">{children}</div>
+          </AuthProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

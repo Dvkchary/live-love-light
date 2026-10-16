@@ -7,27 +7,54 @@ import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import { useAuth } from '@/lib/auth-context';
 import { getAllProducts } from '@/lib/products';
-import { Product } from '@/types';
+import { Product, Order } from '@/types';
+import { getSupabaseBrowserClient } from '@/lib/supabase';
 import {
   User,
   Heart,
   LogOut,
-  ShoppingBag,
   ShieldCheck,
-  Flame,
   ArrowRight,
-  ExternalLink
+  Package
 } from 'lucide-react';
 import LoginModal from '@/components/LoginModal';
 
 export default function AccountPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, openSignIn } = useAuth();
   const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
 
   useEffect(() => {
     getAllProducts().then(setAllProducts);
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+    supabase
+      .from('orders')
+      .select('*')
+      .eq('customer_id', user.uid)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setOrders(data.map((o: Record<string, unknown>) => ({
+            id: String(o.id || ''),
+            customerId: String(o.customer_id || ''),
+            orderStatus: (o.order_status as Order['orderStatus']) || 'pending',
+            subtotal: Number(o.subtotal || 0),
+            shippingAmount: Number(o.shipping_amount || 0),
+            totalAmount: Number(o.total_amount || 0),
+            shippingAddress: (o.shipping_address as Record<string, string>) || {},
+            paymentStatus: (o.payment_status as Order['paymentStatus']) || 'pending',
+            createdAt: String(o.created_at || ''),
+            updatedAt: String(o.updated_at || ''),
+          })));
+        }
+      });
+  }, [user]);
 
   const savedIds: string[] = typeof window !== 'undefined'
     ? JSON.parse(localStorage.getItem('lll_wishlist_v1') || '[]')
@@ -133,6 +160,37 @@ export default function AccountPage() {
                 </div>
               )}
             </div>
+
+            {/* Order History Section (Supabase Orders) */}
+            {orders.length > 0 && (
+              <div className="pt-2">
+                <h2 className="font-serif-luxury text-2xl font-bold text-[#231B15] flex items-center gap-2 mb-4">
+                  <Package className="w-5 h-5 text-[#9A7513]" />
+                  Order History ({orders.length})
+                </h2>
+                <div className="bg-white rounded-3xl border border-[#EAE3D9] overflow-hidden shadow-xs divide-y divide-[#EAE3D9]">
+                  {orders.map((o) => (
+                    <div key={o.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-[#231B15]">Order #{o.id.slice(0, 8)}</span>
+                          <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                            {o.orderStatus}
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#786C63] mt-1">
+                          Placed on {new Date(o.createdAt).toLocaleDateString()} • {o.paymentStatus.toUpperCase()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-bold text-base text-[#231B15]">₹{o.totalAmount}</span>
+                        <span className="text-[11px] text-[#786C63] block">Incl. Taxes & Shipping</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         ) : (
           /* Unauthenticated state */
@@ -146,17 +204,32 @@ export default function AccountPage() {
                 Account Access
               </h2>
               <p className="text-xs text-[#786C63] mt-1">
-                Please sign in with your email or mobile OTP to view saved candles and account details.
+                Please sign in with Clerk authentication to view saved candles and account details.
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setIsLoginOpen(true)}
-              className="w-full py-3 px-4 rounded-xl bg-[#231B15] hover:bg-[#3D3027] text-white text-xs font-semibold tracking-wider uppercase transition-colors"
-            >
-              Sign In to Your Account
-            </button>
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => {
+                  if (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+                    openSignIn();
+                  } else {
+                    setIsLoginOpen(true);
+                  }
+                }}
+                className="w-full py-3 px-4 rounded-xl bg-[#231B15] hover:bg-[#3D3027] text-white text-xs font-semibold tracking-wider uppercase transition-colors"
+              >
+                Sign In to Your Account
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsLoginOpen(true)}
+                className="w-full py-2.5 px-4 rounded-xl bg-[#F6F1EC] hover:bg-[#EBE3D7] text-[#231B15] text-xs font-medium border border-[#EAE3D9] transition-colors"
+              >
+                Preview / Demo Mode
+              </button>
+            </div>
           </div>
         )}
       </main>

@@ -11,7 +11,6 @@ import {
   ShieldAlert,
   CheckCircle2,
   AlertCircle,
-  Flame,
   Sparkles,
   Lock
 } from 'lucide-react';
@@ -24,6 +23,7 @@ interface LoginModalProps {
 export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const {
     isConfigured,
+    openSignIn,
     sendEmailOtp,
     verifyEmailOtp,
     sendMobileOtp,
@@ -139,6 +139,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               src="/images/logo.jpeg"
               alt="Live Love Light Logo"
               fill
+              sizes="64px"
               className="object-cover"
             />
           </div>
@@ -151,6 +152,26 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         </div>
 
         <div className="p-6">
+          {/* Clerk Live Authentication Trigger */}
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              openSignIn();
+            }}
+            className="w-full py-3 px-4 rounded-xl bg-[#231B15] hover:bg-[#3D3027] text-white text-xs font-semibold tracking-wider uppercase transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer mb-5"
+          >
+            <Lock className="w-4 h-4 text-[#DFBE58]" />
+            <span>Continue with Clerk (Email OTP / SMS)</span>
+            <ArrowRight className="w-4 h-4 text-[#DFBE58]" />
+          </button>
+
+          <div className="relative flex py-2 items-center mb-5">
+            <div className="flex-grow border-t border-[#EAE3D9]"></div>
+            <span className="shrink-0 mx-3 text-[10px] text-[#786C63] uppercase tracking-wider font-semibold">Or use direct form</span>
+            <div className="flex-grow border-t border-[#EAE3D9]"></div>
+          </div>
+
           {/* Method Selector: Email OTP vs Mobile OTP */}
           {!otpSent && (
             <div className="flex rounded-lg bg-[#F6F1EC] p-1 mb-5 border border-[#EAE3D9]">

@@ -1,6 +1,7 @@
 import { Product } from '@/types';
 import { INITIAL_PRODUCTS, INITIAL_CATEGORIES } from '@/data/initialProducts';
 import { db, isFirebaseConfigured } from './firebase';
+import { isSupabaseConfigured, getSupabaseBrowserClient, getSupabaseServerClient } from './supabase';
 import {
   collection,
   getDocs,
@@ -82,6 +83,51 @@ export function setLocalCategories(categories: string[]) {
 
 // Fetch all active products
 export async function getAllProducts(): Promise<Product[]> {
+  // 1. Fetch from Supabase if configured
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = typeof window === 'undefined' ? getSupabaseServerClient() : getSupabaseBrowserClient();
+      if (supabase) {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('active', true)
+          .order('created_at', { ascending: false });
+
+        if (!error && data && data.length > 0) {
+          const supabaseProducts: Product[] = data.map((row) => ({
+            id: row.id,
+            name: row.name,
+            slug: row.slug,
+            description: row.description,
+            fragrance: row.fragrance,
+            fragranceNotes: row.fragrance_notes,
+            price: Number(row.price),
+            originalPrice: row.original_price ? Number(row.original_price) : undefined,
+            currency: (row.currency || 'INR') as 'INR',
+            category: row.category,
+            images: Array.isArray(row.images) ? row.images : [],
+            marketplaces: row.marketplaces || {},
+            featured: Boolean(row.featured),
+            active: Boolean(row.active),
+            inStock: Boolean(row.in_stock),
+            burnTimeHours: row.burn_time_hours ?? 45,
+            waxType: row.wax_type ?? '100% Botanical Soy Wax',
+            weightGrams: row.weight_grams ?? 250,
+            dimensions: row.dimensions,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at,
+          }));
+          setLocalProducts(supabaseProducts);
+          return supabaseProducts;
+        }
+      }
+    } catch (err) {
+      console.warn('Supabase products fetch failed, falling back to local data:', err);
+    }
+  }
+
+  // 2. Fallback to Firestore if configured
   if (isFirebaseConfigured() && db) {
     try {
       const productsRef = collection(db, 'products');
@@ -124,6 +170,37 @@ export async function saveProduct(product: Product): Promise<void> {
 
   setLocalProducts(updated);
 
+  // Sync to Supabase if configured
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = typeof window === 'undefined' ? getSupabaseServerClient(true) : getSupabaseBrowserClient();
+      if (supabase) {
+        await supabase.from('products').upsert({
+          id: product.id,
+          name: product.name,
+          slug: product.slug,
+          description: product.description,
+          fragrance: product.fragrance,
+          fragrance_notes: product.fragranceNotes || {},
+          price: product.price,
+          original_price: product.originalPrice,
+          currency: product.currency,
+          category: product.category,
+          images: product.images,
+          marketplaces: product.marketplaces || {},
+          featured: product.featured,
+          active: product.active,
+          in_stock: product.inStock,
+          burn_time_hours: product.burnTimeHours,
+          wax_type: product.waxType,
+          updated_at: new Date().toISOString()
+        });
+      }
+    } catch (err) {
+      console.error('Failed to sync product to Supabase:', err);
+    }
+  }
+
   // Sync to Firestore if configured
   if (isFirebaseConfigured() && db) {
     try {
@@ -139,6 +216,18 @@ export async function deleteProduct(id: string): Promise<void> {
   const current = getLocalProducts();
   const updated = current.filter(p => p.id !== id);
   setLocalProducts(updated);
+
+  // Delete from Supabase if configured
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = typeof window === 'undefined' ? getSupabaseServerClient(true) : getSupabaseBrowserClient();
+      if (supabase) {
+        await supabase.from('products').delete().eq('id', id);
+      }
+    } catch (err) {
+      console.error('Failed to delete product from Supabase:', err);
+    }
+  }
 
   if (isFirebaseConfigured() && db) {
     try {

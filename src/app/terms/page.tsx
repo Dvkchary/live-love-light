@@ -58,7 +58,7 @@ export default function TermsPage() {
               4. Shipping, Returns, and Replacements
             </h2>
             <p>
-              Because purchases are completed on Amazon, Flipkart, or Meesho, shipping times, delivery dispatch, return windows, and replacement claims are handled according to the specific marketplace's customer protection guidelines under which the order was booked.
+              Because purchases are completed on Amazon, Flipkart, or Meesho, shipping times, delivery dispatch, return windows, and replacement claims are handled according to the specific marketplace&apos;s customer protection guidelines under which the order was booked.
             </p>
           </section>
 
@@ -67,7 +67,7 @@ export default function TermsPage() {
               5. Intellectual Property
             </h2>
             <p>
-              All photographs, logos, product designs, sculptural shapes, and textual content of "Live Love Light" and "LIGHT SOMETHING BEAUTIFUL" are proprietary assets of Live Love Light. Unauthorized reproduction or commercial re-use is strictly prohibited.
+              All photographs, logos, product designs, sculptural shapes, and textual content of &ldquo;Live Love Light&rdquo; and &ldquo;LIGHT SOMETHING BEAUTIFUL&rdquo; are proprietary assets of Live Love Light. Unauthorized reproduction or commercial re-use is strictly prohibited.
             </p>
           </section>
         </div>

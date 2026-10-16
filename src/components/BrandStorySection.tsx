@@ -2,8 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import Link from 'next/image';
-import { Flame, Sparkles, Heart, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 export default function BrandStorySection() {
   const pillars = [
@@ -53,6 +52,7 @@ export default function BrandStorySection() {
                   src={pillar.image}
                   alt={pillar.title}
                   fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>

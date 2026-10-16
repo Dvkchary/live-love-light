@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Flame, Heart, Sparkles, Mail, MapPin, Phone } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -18,6 +18,7 @@ export default function Footer() {
                   src="/images/logo.jpeg"
                   alt="Live Love Light Logo"
                   fill
+                  sizes="48px"
                   className="object-cover"
                 />
               </div>

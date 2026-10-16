@@ -10,7 +10,7 @@ import MarketplaceBanner from '@/components/MarketplaceBanner';
 import Footer from '@/components/Footer';
 import { Product, FilterOptions } from '@/types';
 import { getAllProducts } from '@/lib/products';
-import { Sparkles, Flame, ArrowRight } from 'lucide-react';
+import { Flame } from 'lucide-react';
 import Image from 'next/image';
 
 const defaultFilters: FilterOptions = {
@@ -192,6 +192,7 @@ export default function HomePage() {
                       src={img}
                       alt={cat}
                       fill
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
                       className="object-cover group-hover:scale-108 transition-transform duration-500"
                     />
                   </div>

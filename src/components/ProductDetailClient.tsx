@@ -14,7 +14,6 @@ import {
   Heart,
   Flame,
   Clock,
-  Sparkles,
   ShieldCheck,
   ExternalLink,
   ChevronLeft,
@@ -155,6 +154,7 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
                   src={selectedImage || product.images[0] || '/images/logo.jpeg'}
                   alt={product.name}
                   fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
                   priority
                   className="object-cover"
                 />
@@ -195,6 +195,7 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
                         src={img}
                         alt={`${product.name} thumbnail ${i + 1}`}
                         fill
+                        sizes="80px"
                         className="object-cover"
                       />
                     </button>

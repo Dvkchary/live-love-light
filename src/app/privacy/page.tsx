@@ -28,7 +28,7 @@ export default function PrivacyPage() {
               1. Our Privacy Commitment
             </h2>
             <p>
-              At Live Love Light ("we", "our", or "us"), we value your privacy. We design our website as an elegant discovery platform and minimize data collection to what is essential for account authentication and catalogue browsing.
+              At Live Love Light (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;), we value your privacy. We design our website as an elegant discovery platform and minimize data collection to what is essential for account authentication and catalogue browsing.
             </p>
           </section>
 

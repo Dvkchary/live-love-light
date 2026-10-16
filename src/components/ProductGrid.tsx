@@ -3,7 +3,7 @@
 import React from 'react';
 import { Product } from '@/types';
 import ProductCard from './ProductCard';
-import { SearchX, Sparkles, RotateCcw } from 'lucide-react';
+import { SearchX, RotateCcw } from 'lucide-react';
 
 interface ProductGridProps {
   products: Product[];
@@ -46,7 +46,7 @@ export default function ProductGrid({
           No matching candles found
         </h3>
         <p className="text-sm text-[#786C63] max-w-md mx-auto mb-6">
-          We couldn't find any candles matching your current filters or search terms. Try adjusting your search query or selecting a different fragrance.
+          We couldn&apos;t find any candles matching your current filters or search terms. Try adjusting your search query or selecting a different fragrance.
         </p>
         {onResetFilters && (
           <button

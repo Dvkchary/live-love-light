@@ -3,13 +3,9 @@
 import React from 'react';
 import { FilterOptions } from '@/types';
 import {
-  SlidersHorizontal,
-  Flame,
   ArrowUpDown,
   Check,
-  RotateCcw,
-  Sparkles,
-  ShoppingBag
+  RotateCcw
 } from 'lucide-react';
 
 interface ZomatoFiltersProps {

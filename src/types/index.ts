@@ -69,3 +69,29 @@ export interface FilterOptions {
   onlyMarketplace?: 'all' | 'amazon' | 'flipkart' | 'meesho';
   maxPrice?: number;
 }
+
+export interface OrderItem {
+  id: string;
+  orderId: string;
+  productId?: string;
+  productName: string;
+  unitPrice: number;
+  quantity: number;
+  lineTotal: number;
+  createdAt?: string;
+}
+
+export interface Order {
+  id: string;
+  customerId: string;
+  orderStatus: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  subtotal: number;
+  shippingAmount: number;
+  totalAmount: number;
+  shippingAddress?: Record<string, unknown>;
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
+  items?: OrderItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+

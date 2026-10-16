@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '@/components/Navbar';
@@ -30,24 +30,29 @@ import {
   Eye,
   RefreshCw,
   X,
-  Sparkles,
   ShoppingBag,
-  Lock,
-  ArrowRight
+  Lock
 } from 'lucide-react';
 
-const ADMIN_PASSCODE = process.env.NEXT_PUBLIC_ADMIN_KEY || 'livelovelight2026';
+const subscribeToStorage = () => () => {};
+const getSessionSnapshot = () => {
+  return typeof window !== 'undefined' && sessionStorage.getItem('lll_admin_unlocked') === 'true';
+};
+const getSessionServerSnapshot = () => false;
 
 export default function AdminPage() {
-  const { user, isAdmin, loginWithDemoUser } = useAuth();
+  const { isAdmin, loginWithDemoUser } = useAuth();
+  const sessionUnlocked = useSyncExternalStore(subscribeToStorage, getSessionSnapshot, getSessionServerSnapshot);
+  const [passcodeUnlocked, setPasscodeUnlocked] = useState(false);
+  const isUnlocked = isAdmin || sessionUnlocked || passcodeUnlocked;
+
   const [passcode, setPasscode] = useState('');
-  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [clicks, setClicks] = useState<MarketplaceClickEvent[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'analytics'>('products');
 
   // Edit / Add Modal state
@@ -81,44 +86,76 @@ export default function AdminPage() {
   const [formBurnTime, setFormBurnTime] = useState<number>(45);
   const [formWaxType, setFormWaxType] = useState('100% Botanical Soy Wax');
 
-  useEffect(() => {
-    // Check if user has admin role or already unlocked in session
-    if (isAdmin || sessionStorage.getItem('lll_admin_unlocked') === 'true') {
-      setIsUnlocked(true);
-    }
-  }, [isAdmin]);
-
   const refreshData = async () => {
-    setLoading(true);
     try {
-      const p = await getAllProducts();
-      const c = await getAllCategories();
-      const clk = await getMarketplaceClicks();
+      const [p, c, clk] = await Promise.all([
+        getAllProducts(),
+        getAllCategories(),
+        getMarketplaceClicks()
+      ]);
       setProducts(p);
       setCategories(c);
       setClicks(clk);
     } catch (e) {
       console.error('Failed to load admin data', e);
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (isUnlocked) {
-      refreshData();
+    if (!isUnlocked) return;
+    let ignore = false;
+    async function loadData() {
+      try {
+        const [p, c, clk] = await Promise.all([
+          getAllProducts(),
+          getAllCategories(),
+          getMarketplaceClicks()
+        ]);
+        if (!ignore) {
+          setProducts(p);
+          setCategories(c);
+          setClicks(clk);
+        }
+      } catch (e) {
+        console.error('Failed to load admin data', e);
+      }
     }
+    loadData();
+    return () => {
+      ignore = true;
+    };
   }, [isUnlocked]);
 
-  const handleUnlockWithPasscode = (e: React.FormEvent) => {
+  const handleUnlockWithPasscode = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passcode.trim() === ADMIN_PASSCODE || passcode.trim() === 'admin123') {
-      setIsUnlocked(true);
-      sessionStorage.setItem('lll_admin_unlocked', 'true');
-      loginWithDemoUser('admin', 'admin@livelovelight.in');
-      setAuthError(null);
-    } else {
-      setAuthError('Invalid administrator credentials.');
+    if (!passcode.trim()) {
+      setAuthError('Please enter administrator passcode.');
+      return;
+    }
+    setVerifying(true);
+    setAuthError(null);
+
+    try {
+      const res = await fetch('/api/admin/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ passcode: passcode.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.authorized) {
+        try {
+          sessionStorage.setItem('lll_admin_unlocked', 'true');
+        } catch {}
+        setPasscodeUnlocked(true);
+        loginWithDemoUser('admin', 'admin@livelovelight.in');
+        setAuthError(null);
+      } else {
+        setAuthError(data.error || 'Invalid administrator credentials.');
+      }
+    } catch {
+      setAuthError('Failed to connect to verification server. Please retry.');
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -176,7 +213,7 @@ export default function AdminPage() {
     setIsModalOpen(true);
   };
 
-  const validateUrl = (url: string, platform: string): boolean => {
+  const validateUrl = (url: string): boolean => {
     if (!url.trim()) return true; // optional
     try {
       const parsed = new URL(url);
@@ -202,15 +239,15 @@ export default function AdminPage() {
       setFormError('Price must be greater than zero.');
       return;
     }
-    if (!validateUrl(formAmazonUrl, 'Amazon')) {
+    if (!validateUrl(formAmazonUrl)) {
       setFormError('Invalid Amazon URL. Must begin with https://');
       return;
     }
-    if (!validateUrl(formFlipkartUrl, 'Flipkart')) {
+    if (!validateUrl(formFlipkartUrl)) {
       setFormError('Invalid Flipkart URL. Must begin with https://');
       return;
     }
-    if (!validateUrl(formMeeshoUrl, 'Meesho')) {
+    if (!validateUrl(formMeeshoUrl)) {
       setFormError('Invalid Meesho URL. Must begin with https://');
       return;
     }
@@ -323,15 +360,15 @@ export default function AdminPage() {
 
               <button
                 type="submit"
-                className="w-full py-2.5 px-4 rounded-lg bg-[#231B15] hover:bg-[#3D3027] text-white text-xs font-semibold tracking-wider uppercase transition-colors"
+                disabled={verifying}
+                className="w-full py-2.5 px-4 rounded-lg bg-[#231B15] hover:bg-[#3D3027] text-white text-xs font-semibold tracking-wider uppercase transition-colors disabled:opacity-50"
               >
-                Authenticate Session
+                {verifying ? 'Verifying Server Authorization...' : 'Authenticate Session'}
               </button>
             </form>
 
             <div className="pt-2 border-t border-[#EAE3D9] text-[11px] text-[#786C63]">
-              <span>Default initial key: </span>
-              <code className="bg-[#F6F1EC] px-1.5 py-0.5 rounded font-mono text-[#231B15]">livelovelight2026</code>
+              <span>Protected portal. Credentials are authenticated securely via server-side authorization.</span>
             </div>
           </div>
         </main>
@@ -440,6 +477,7 @@ export default function AdminPage() {
                             src={p.images[0] || '/images/logo.jpeg'}
                             alt={p.name}
                             fill
+                            sizes="48px"
                             className="object-cover"
                           />
                         </div>
@@ -750,6 +788,7 @@ export default function AdminPage() {
                         src={formImages.split(',')[0]?.trim() || '/images/logo.jpeg'}
                         alt={formName || 'Candle Preview'}
                         fill
+                        sizes="(max-width: 640px) 100vw, 320px"
                         className="object-cover"
                       />
                     </div>

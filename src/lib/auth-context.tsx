@@ -2,7 +2,9 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserProfile } from '@/types';
+import { useUser, useClerk } from '@clerk/nextjs';
 import { isFirebaseConfigured, auth } from './firebase';
+import { getSupabaseBrowserClient } from './supabase';
 import {
   onAuthStateChanged,
   signOut as fbSignOut,
@@ -14,6 +16,7 @@ interface AuthContextType {
   loading: boolean;
   isConfigured: boolean;
   isAdmin: boolean;
+  openSignIn: () => void;
   loginWithDemoUser: (role: 'customer' | 'admin', identifier?: string) => void;
   logout: () => Promise<void>;
   toggleWishlist: (productId: string) => void;
@@ -31,24 +34,113 @@ const LOCAL_WISHLIST_KEY = 'lll_wishlist_v1';
 const RATE_LIMIT_KEY = 'lll_otp_rate_limit_v1';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isConfigured, setIsConfigured] = useState(false);
-  const [wishlist, setWishlist] = useState<string[]>([]);
+  const isFbConfigured = isFirebaseConfigured();
+  const isClerkConfigured = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+  const isConfigured = isClerkConfigured || isFbConfigured;
 
-  useEffect(() => {
-    const configured = isFirebaseConfigured();
-    setIsConfigured(configured);
+  // Clerk authentication state
+  const { isLoaded: clerkLoaded, isSignedIn: clerkSignedIn, user: clerkUser } = useUser();
+  const clerk = useClerk();
 
-    // Load wishlist
+  // Local user fallback for preview / offline demo
+  const [localUser, setLocalUser] = useState<UserProfile | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const localStored = localStorage.getItem(LOCAL_USER_KEY);
+      return localStored ? JSON.parse(localStored) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [wishlist, setWishlist] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
     try {
       const storedWishlist = localStorage.getItem(LOCAL_WISHLIST_KEY);
-      if (storedWishlist) setWishlist(JSON.parse(storedWishlist));
-    } catch (e) {
-      console.warn('Could not load stored wishlist', e);
+      return storedWishlist ? JSON.parse(storedWishlist) : [];
+    } catch {
+      return [];
     }
+  });
 
-    if (configured && auth) {
+  // Determine active user profile (prioritizing Clerk authenticated user)
+  let user: UserProfile | null = null;
+
+  if (clerkSignedIn && clerkUser) {
+    const primaryEmail = clerkUser.primaryEmailAddress?.emailAddress;
+    const primaryPhone = clerkUser.primaryPhoneNumber?.phoneNumber;
+    const displayName =
+      clerkUser.fullName ||
+      clerkUser.firstName ||
+      clerkUser.username ||
+      primaryEmail?.split('@')[0] ||
+      'Candle Enthusiast';
+
+    const isClerkAdmin = Boolean(
+      clerkUser.publicMetadata?.role === 'admin' ||
+      primaryEmail?.endsWith('@livelovelight.website') ||
+      primaryEmail?.endsWith('@livelovelight.in') ||
+      primaryEmail === 'admin@livelovelight.website'
+    );
+
+    user = {
+      uid: clerkUser.id,
+      email: primaryEmail,
+      phoneNumber: primaryPhone,
+      displayName,
+      role: isClerkAdmin ? 'admin' : 'customer',
+      savedProducts: wishlist,
+      createdAt: clerkUser.createdAt ? new Date(clerkUser.createdAt).toISOString() : new Date().toISOString()
+    };
+  } else {
+    user = localUser;
+  }
+
+  const loading = isClerkConfigured ? !clerkLoaded : false;
+  const isAdmin = user?.role === 'admin';
+
+  // Sync Clerk authenticated user into Supabase profiles table
+  useEffect(() => {
+    if (!clerkSignedIn || !clerkUser) return;
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+
+    const primaryEmail = clerkUser.primaryEmailAddress?.emailAddress;
+    const primaryPhone = clerkUser.primaryPhoneNumber?.phoneNumber;
+    const displayName =
+      clerkUser.fullName ||
+      clerkUser.firstName ||
+      clerkUser.username ||
+      primaryEmail?.split('@')[0] ||
+      'Candle Enthusiast';
+
+    const role = (
+      clerkUser.publicMetadata?.role === 'admin' ||
+      primaryEmail?.endsWith('@livelovelight.website') ||
+      primaryEmail?.endsWith('@livelovelight.in')
+    ) ? 'admin' : 'customer';
+
+    supabase
+      .from('profiles')
+      .upsert({
+        id: clerkUser.id,
+        email: primaryEmail || null,
+        phone_number: primaryPhone || null,
+        display_name: displayName,
+        role,
+        saved_products: wishlist,
+        updated_at: new Date().toISOString()
+      })
+      .then(({ error }) => {
+        if (error) {
+          console.warn('Supabase profile sync note:', error.message);
+        }
+      });
+  }, [clerkSignedIn, clerkUser, wishlist]);
+
+  // Legacy Firebase listener (for fallback only if Clerk is not used)
+  useEffect(() => {
+    if (!isClerkConfigured && isFbConfigured && auth) {
       const unsubscribe = onAuthStateChanged(auth, (fbUser: FirebaseUser | null) => {
         if (fbUser) {
           const profile: UserProfile = {
@@ -59,66 +151,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             role: fbUser.email?.endsWith('@livelovelight.in') ? 'admin' : 'customer',
             createdAt: new Date().toISOString()
           };
-          setUser(profile);
+          setLocalUser(profile);
           try {
             localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(profile));
           } catch {}
-        } else {
-          // Check local preview session
-          const localStored = localStorage.getItem(LOCAL_USER_KEY);
-          if (localStored) {
-            try {
-              setUser(JSON.parse(localStored));
-            } catch {
-              setUser(null);
-            }
-          } else {
-            setUser(null);
-          }
         }
-        setLoading(false);
       });
       return () => unsubscribe();
-    } else {
-      // Local fallback for dev/preview
-      try {
-        const localStored = localStorage.getItem(LOCAL_USER_KEY);
-        if (localStored) {
-          setUser(JSON.parse(localStored));
-        }
-      } catch (e) {
-        console.warn('Auth local load error', e);
-      }
-      setLoading(false);
     }
-  }, []);
+  }, [isClerkConfigured, isFbConfigured]);
 
-  // Save wishlist changes
+  // Open Clerk sign-in modal
+  const openSignIn = () => {
+    try {
+      clerk.openSignIn();
+    } catch (e) {
+      console.warn('Clerk openSignIn modal note:', e);
+    }
+  };
+
+  // Toggle saved wishlist and sync to Supabase if signed in
   const toggleWishlist = (productId: string) => {
     setWishlist(prev => {
       const updated = prev.includes(productId)
         ? prev.filter(id => id !== productId)
         : [...prev, productId];
+
       try {
         localStorage.setItem(LOCAL_WISHLIST_KEY, JSON.stringify(updated));
       } catch {}
+
+      // Sync wishlist to Supabase profile
+      if (clerkSignedIn && clerkUser) {
+        const supabase = getSupabaseBrowserClient();
+        if (supabase) {
+          supabase
+            .from('profiles')
+            .update({ saved_products: updated, updated_at: new Date().toISOString() })
+            .eq('id', clerkUser.id)
+            .then(() => {});
+        }
+      }
+
       return updated;
     });
   };
 
   const isWishlisted = (productId: string) => wishlist.includes(productId);
 
-  // Rate limiting check (allows at most 3 requests per 5 minutes)
+  // Rate limiting check
   const checkRateLimit = (key: string): boolean => {
     try {
       const now = Date.now();
       const raw = localStorage.getItem(`${RATE_LIMIT_KEY}_${key}`);
       let timestamps: number[] = raw ? JSON.parse(raw) : [];
-      // filter out older than 5 minutes (300000 ms)
       timestamps = timestamps.filter(t => now - t < 300000);
-      if (timestamps.length >= 3) {
-        return false;
-      }
+      if (timestamps.length >= 3) return false;
       timestamps.push(now);
       localStorage.setItem(`${RATE_LIMIT_KEY}_${key}`, JSON.stringify(timestamps));
       return true;
@@ -131,86 +219,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!email || !email.includes('@')) {
       return { success: false, message: 'Please enter a valid email address.' };
     }
-
     if (!checkRateLimit(`email_${email}`)) {
       return { success: false, message: 'Too many OTP requests. Please wait 5 minutes before trying again.' };
     }
-
-    if (!isConfigured) {
-      return {
-        success: false,
-        message: 'Firebase Authentication is not yet configured in .env.local. Please provide Firebase credentials to enable live email OTP delivery.'
-      };
+    if (isClerkConfigured) {
+      openSignIn();
+      return { success: true, message: 'Opening secure Clerk authentication...' };
     }
-
-    // When configured with Firebase:
-    // In production Firebase Web, Passwordless Email Sign-In (sendSignInLinkToEmail) is the standard recommended OTP mechanism.
-    return {
-      success: true,
-      message: `A secure verification code has been dispatched to ${email}.`
-    };
+    return { success: false, message: 'Authentication provider is not yet configured.' };
   };
 
-  const verifyEmailOtp = async (email: string, otp: string) => {
+  const verifyEmailOtp = async (_email: string, otp: string) => {
     if (!otp || otp.trim().length < 4) {
-      return { success: false, message: 'Please enter a valid 6-digit verification code.' };
+      return { success: false, message: 'Please enter a valid verification code.' };
     }
-
-    if (!isConfigured) {
-      return {
-        success: false,
-        message: 'Authentication provider is not configured. Live verification requires Firebase Auth setup.'
-      };
-    }
-
-    // If real Firebase is configured, verify via server/auth provider
-    return {
-      success: false,
-      message: 'Invalid or expired verification code. Please request a new code.'
-    };
+    return { success: false, message: 'Please use the official Clerk sign-in modal.' };
   };
 
   const sendMobileOtp = async (phone: string) => {
     if (!phone || phone.length < 10) {
       return { success: false, message: 'Please enter a valid 10-digit mobile number.' };
     }
-
-    if (!checkRateLimit(`phone_${phone}`)) {
-      return { success: false, message: 'Rate limit exceeded. Please wait 5 minutes before requesting another OTP.' };
+    if (isClerkConfigured) {
+      openSignIn();
+      return { success: true, message: 'Opening secure Clerk authentication...' };
     }
-
-    if (!isConfigured) {
-      return {
-        success: false,
-        message: 'Mobile OTP provider is not configured. Live SMS verification requires Firebase Phone Auth configuration.'
-      };
-    }
-
-    return {
-      success: true,
-      message: `SMS code dispatched to +91 ${phone}.`
-    };
+    return { success: false, message: 'Authentication provider is not configured.' };
   };
 
-  const verifyMobileOtp = async (phone: string, otp: string) => {
+  const verifyMobileOtp = async (_phone: string, otp: string) => {
     if (!otp || otp.length < 4) {
       return { success: false, message: 'Invalid verification code.' };
     }
-
-    if (!isConfigured) {
-      return {
-        success: false,
-        message: 'Authentication provider not configured.'
-      };
-    }
-
-    return {
-      success: false,
-      message: 'Verification code expired or invalid.'
-    };
+    return { success: false, message: 'Please use the official Clerk sign-in modal.' };
   };
 
-  // Safe developer preview login (clearly identified)
+  // Safe developer preview login
   const loginWithDemoUser = (role: 'customer' | 'admin', identifier: string = 'demo@livelovelight.in') => {
     const profile: UserProfile = {
       uid: `usr_${role}_${Date.now()}`,
@@ -221,27 +265,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       savedProducts: wishlist,
       createdAt: new Date().toISOString()
     };
-    setUser(profile);
+    setLocalUser(profile);
     try {
       localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(profile));
     } catch {}
   };
 
   const logout = async () => {
-    if (isConfigured && auth) {
+    if (clerkSignedIn) {
       try {
-        await fbSignOut(auth);
+        await clerk.signOut();
       } catch (err) {
-        console.warn('Firebase signout error:', err);
+        console.warn('Clerk signout note:', err);
       }
     }
-    setUser(null);
+    if (isFbConfigured && auth) {
+      try {
+        await fbSignOut(auth);
+      } catch {}
+    }
+    setLocalUser(null);
     try {
       localStorage.removeItem(LOCAL_USER_KEY);
     } catch {}
   };
-
-  const isAdmin = user?.role === 'admin';
 
   return (
     <AuthContext.Provider
@@ -250,6 +297,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading,
         isConfigured,
         isAdmin,
+        openSignIn,
         loginWithDemoUser,
         logout,
         toggleWishlist,

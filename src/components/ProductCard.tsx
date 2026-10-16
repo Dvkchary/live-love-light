@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Product } from '@/types';
 import { useAuth } from '@/lib/auth-context';
-import { Heart, Sparkles, ExternalLink, ArrowRight, Flame } from 'lucide-react';
+import { Heart, Sparkles, ArrowRight, Flame } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
@@ -30,7 +30,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     <div className="group bg-white rounded-2xl border border-[#EAE3D9] overflow-hidden luxury-card-shadow transition-all duration-300 flex flex-col h-full relative">
       {/* Top Media Container */}
       <div className="relative aspect-square w-full bg-[#F6F1EC] overflow-hidden">
-        <Link href={`/product/${product.slug}`} className="block w-full h-full">
+        <Link href={`/product/${product.slug}`} className="relative block w-full h-full">
           <Image
             src={mainImage}
             alt={product.name}

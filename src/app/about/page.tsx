@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Flame, Sparkles, Heart, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Sparkles, ArrowRight } from 'lucide-react';
 
 export default function AboutPage() {
   return (
@@ -51,6 +51,7 @@ export default function AboutPage() {
                 src="/images/teddy - Royal oud.jpeg"
                 alt="Teddy Candle Handcrafted"
                 fill
+                sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover"
               />
             </div>
@@ -62,6 +63,7 @@ export default function AboutPage() {
                 src="/images/jar - rayal oud.jpeg"
                 alt="Amber Jar Royal Oud Candle"
                 fill
+                sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover"
               />
             </div>
