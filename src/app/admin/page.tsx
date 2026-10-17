@@ -1,19 +1,17 @@
 'use client';
 
-import React, { useState, useEffect, useSyncExternalStore, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Product, CandleCategory, MarketplaceClickEvent, UserRole, AdminUserSummary } from '@/types';
+import { Product, CandleCategory, MarketplaceClickEvent, UserRole, AdminUserSummary, Order } from '@/types';
 import {
-  getAllProducts,
   saveProduct,
   deleteProduct,
   getAllCategories,
   saveCategory,
   deleteCategory,
-  resetToInitialProducts
 } from '@/lib/products';
 import { getMarketplaceClicks } from '@/lib/analytics';
 import { useAuth } from '@/lib/auth-context';
@@ -35,41 +33,42 @@ import {
   Users
 } from 'lucide-react';
 
-const subscribeToStorage = () => () => {};
-const getSessionSnapshot = () => {
-  return typeof window !== 'undefined' && sessionStorage.getItem('lll_admin_unlocked') === 'true';
-};
-const getSessionServerSnapshot = () => false;
+type AdminTab = 'products' | 'categories' | 'analytics' | 'roles' | 'orders' | 'settings';
 
-export default function AdminPage() {
+export default function AdminPage({ initialTab = 'products' }: { initialTab?: AdminTab }) {
   const { user, isAdmin, isSuperAdmin, isProductManager } = useAuth();
-  const sessionUnlocked = useSyncExternalStore(subscribeToStorage, getSessionSnapshot, getSessionServerSnapshot);
-  const [passcodeUnlocked, setPasscodeUnlocked] = useState(false);
-  const isUnlocked = isAdmin || sessionUnlocked || passcodeUnlocked;
-
   const [serverRole, setServerRole] = useState<UserRole | null>(null);
+  const isUnlocked = isAdmin || serverRole === 'admin' || serverRole === 'product_manager' || serverRole === 'super_admin';
   const effectiveRole: UserRole =
     serverRole ||
-    (isSuperAdmin ? 'super_admin' : isProductManager ? 'product_manager' : (user?.role as UserRole) || 'customer');
-  const isSuperAdminRole = effectiveRole === 'super_admin' || effectiveRole === 'admin';
-  const isProductManagerRole = effectiveRole === 'product_manager';
-
-  const [passcode, setPasscode] = useState('');
-  const [verifying, setVerifying] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
+    (isSuperAdmin ? 'super_admin' : isProductManager ? 'admin' : (user?.role as UserRole) || 'customer');
+  const isSuperAdminRole = effectiveRole === 'super_admin';
+  const isProductManagerRole = effectiveRole === 'admin' || effectiveRole === 'product_manager';
+  const isAdminRole = isSuperAdminRole || isProductManagerRole;
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [clicks, setClicks] = useState<MarketplaceClickEvent[]>([]);
-  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'analytics' | 'roles'>(() => {
-    if (typeof window === 'undefined') return 'products';
-    const params = new URLSearchParams(window.location.search);
-    const tabParam = params.get('tab');
-    if (tabParam === 'users' || tabParam === 'roles') return 'roles';
-    if (tabParam === 'marketplaces' || tabParam === 'analytics') return 'analytics';
-    if (tabParam === 'categories') return 'categories';
-    return 'products';
-  });
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [adminCanDeleteProducts, setAdminCanDeleteProducts] = useState(false);
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<AdminTab>(initialTab);
+  const [productQuery, setProductQuery] = useState('');
+  const [productCategoryFilter, setProductCategoryFilter] = useState('all');
+  const [productSort, setProductSort] = useState<'name' | 'price-low' | 'price-high'>('name');
+  const visibleProducts = products
+    .filter(product => {
+      const query = productQuery.trim().toLowerCase();
+      const matchesQuery = !query || [product.name, product.description, product.fragrance, product.category]
+        .some(value => value.toLowerCase().includes(query));
+      return matchesQuery && (productCategoryFilter === 'all' || product.category === productCategoryFilter);
+    })
+    .sort((a, b) => productSort === 'price-low'
+      ? a.price - b.price
+      : productSort === 'price-high'
+      ? b.price - a.price
+      : a.name.localeCompare(b.name));
 
   // Admin users state (Super Admin only)
   const [adminUsers, setAdminUsers] = useState<AdminUserSummary[]>([]);
@@ -105,19 +104,27 @@ export default function AdminPage() {
   const [formFeatured, setFormFeatured] = useState(false);
   const [formInStock, setFormInStock] = useState(true);
   const [formActive, setFormActive] = useState(true);
+  const [formStockQuantity, setFormStockQuantity] = useState(50);
   const [formBurnTime, setFormBurnTime] = useState<number>(45);
   const [formWaxType, setFormWaxType] = useState('100% Botanical Soy Wax');
 
   const refreshData = async () => {
     try {
-      const [p, c, clk] = await Promise.all([
-        getAllProducts(),
-        getAllCategories(),
-        getMarketplaceClicks()
-      ]);
-      setProducts(p);
-      setCategories(c);
-      setClicks(clk);
+      const response = await fetch('/api/admin/products', { cache: 'no-store' });
+      const data = await response.json();
+      if (!response.ok || !data.success || !Array.isArray(data.products)) {
+        throw new Error(data.error || 'Unable to load products.');
+      }
+      const loadedProducts = data.products as Product[];
+      setProducts(loadedProducts);
+      if (isAdminRole) {
+        const loadedCategories = await getAllCategories();
+        setCategories(loadedCategories);
+      }
+      if (isSuperAdminRole) {
+        const loadedClicks = await getMarketplaceClicks();
+        setClicks(loadedClicks);
+      }
     } catch (e) {
       console.error('Failed to load admin data', e);
     }
@@ -128,15 +135,22 @@ export default function AdminPage() {
     let ignore = false;
     async function loadData() {
       try {
-        const [p, c, clk] = await Promise.all([
-          getAllProducts(),
-          getAllCategories(),
-          getMarketplaceClicks()
-        ]);
+        const response = await fetch('/api/admin/products', { cache: 'no-store' });
+        const data = await response.json();
+        if (!response.ok || !data.success || !Array.isArray(data.products)) {
+          throw new Error(data.error || 'Unable to load products.');
+        }
+        const loadedProducts = data.products as Product[];
+        let loadedCategories: string[] = [];
+        let loadedClicks: MarketplaceClickEvent[] = [];
+        if (isAdminRole) loadedCategories = await getAllCategories();
+        if (isSuperAdminRole) {
+          loadedClicks = await getMarketplaceClicks();
+        }
         if (!ignore) {
-          setProducts(p);
-          setCategories(c);
-          setClicks(clk);
+          setProducts(loadedProducts);
+          setCategories(loadedCategories);
+          setClicks(loadedClicks);
         }
       } catch (e) {
         console.error('Failed to load admin data', e);
@@ -146,7 +160,7 @@ export default function AdminPage() {
     return () => {
       ignore = true;
     };
-  }, [isUnlocked]);
+  }, [isUnlocked, isAdminRole, isSuperAdminRole]);
 
   useEffect(() => {
     fetch('/api/admin/session')
@@ -154,7 +168,6 @@ export default function AdminPage() {
       .then(data => {
         if (data.authenticated && data.role) {
           setServerRole(data.role);
-          setPasscodeUnlocked(true);
         }
       })
       .catch(() => {});
@@ -195,6 +208,35 @@ export default function AdminPage() {
     };
   }, [activeTab, isSuperAdminRole]);
 
+  useEffect(() => {
+    if (!isAdminRole) return;
+    let ignore = false;
+    fetch('/api/admin/settings', { cache: 'no-store' })
+      .then(response => response.json())
+      .then(data => {
+        if (!ignore && data.success) setAdminCanDeleteProducts(data.adminCanDeleteProducts === true);
+      })
+      .catch(() => {});
+    return () => {
+      ignore = true;
+    };
+  }, [isAdminRole]);
+
+  const loadOrders = useCallback(async () => {
+    if (!isSuperAdminRole) return;
+    setOrdersLoading(true);
+    try {
+      const response = await fetch('/api/super-admin/orders', { cache: 'no-store' });
+      const data = await response.json();
+      if (response.ok && data.success && Array.isArray(data.orders)) setOrders(data.orders);
+      else setRoleActionError(data.error || 'Unable to load orders.');
+    } catch {
+      setRoleActionError('Unable to load orders.');
+    } finally {
+      setOrdersLoading(false);
+    }
+  }, [isSuperAdminRole]);
+
   const handleUpdateRole = async (targetUserId: string, newRole: UserRole) => {
     setRoleActionMessage(null);
     setRoleActionError(null);
@@ -216,35 +258,36 @@ export default function AdminPage() {
     }
   };
 
-  const handleUnlockWithPasscode = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!passcode.trim()) {
-      setAuthError('Please enter administrator passcode.');
-      return;
-    }
-    setVerifying(true);
-    setAuthError(null);
-
+  const handleUpdateOrder = async (orderId: string, update: { orderStatus?: Order['orderStatus']; paymentStatus?: Order['paymentStatus'] }) => {
     try {
-      const res = await fetch('/api/admin/verify', {
-        method: 'POST',
+      const response = await fetch('/api/super-admin/orders', {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ passcode: passcode.trim() }),
+        body: JSON.stringify({ orderId, ...update }),
       });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && data.authorized) {
-        try {
-          sessionStorage.setItem('lll_admin_unlocked', 'true');
-        } catch {}
-        setPasscodeUnlocked(true);
-        setAuthError(null);
-      } else {
-        setAuthError(data.error || 'Invalid administrator credentials.');
-      }
-    } catch {
-      setAuthError('Failed to connect to verification server. Please retry.');
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || 'Unable to update order.');
+      await loadOrders();
+    } catch (error) {
+      setRoleActionError(error instanceof Error ? error.message : 'Unable to update order.');
+    }
+  };
+
+  const handleAdminDeletionSetting = async (allow: boolean) => {
+    setSettingsSaving(true);
+    try {
+      const response = await fetch('/api/admin/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminCanDeleteProducts: allow }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || 'Unable to save setting.');
+      setAdminCanDeleteProducts(data.adminCanDeleteProducts === true);
+    } catch (error) {
+      setRoleActionError(error instanceof Error ? error.message : 'Unable to save setting.');
     } finally {
-      setVerifying(false);
+      setSettingsSaving(false);
     }
   };
 
@@ -267,6 +310,7 @@ export default function AdminPage() {
     setFormFeatured(false);
     setFormInStock(true);
     setFormActive(true);
+    setFormStockQuantity(50);
     setFormBurnTime(45);
     setFormWaxType('100% Botanical Soy Wax');
     setFormError(null);
@@ -294,6 +338,7 @@ export default function AdminPage() {
     setFormFeatured(p.featured);
     setFormInStock(p.inStock);
     setFormActive(p.active);
+    setFormStockQuantity(p.stockQuantity ?? (p.inStock ? 1 : 0));
     setFormBurnTime(p.burnTimeHours || 45);
     setFormWaxType(p.waxType || '100% Botanical Soy Wax');
     setFormError(null);
@@ -372,6 +417,7 @@ export default function AdminPage() {
       featured: formFeatured,
       active: formActive,
       inStock: formInStock,
+      stockQuantity: Number(formStockQuantity),
       burnTimeHours: Number(formBurnTime),
       waxType: formWaxType.trim(),
       createdAt: editingProduct ? editingProduct.createdAt : new Date().toISOString(),
@@ -379,7 +425,7 @@ export default function AdminPage() {
     };
 
     try {
-      const res = await saveProduct(productData);
+      const res = await saveProduct(productData, Boolean(editingProduct));
       setFormSuccess(res.notice || 'Product saved successfully.');
       await refreshData();
       setTimeout(() => {
@@ -391,8 +437,8 @@ export default function AdminPage() {
   };
 
   const handleDeleteProduct = async (id: string, name: string) => {
-    if (!isSuperAdminRole) {
-      alert('Only Super Administrators have permission to delete candles.');
+    if (!isSuperAdminRole && !adminCanDeleteProducts) {
+      alert('Product deletion is restricted by the Super Admin.');
       return;
     }
     if (confirm(`Are you sure you want to delete "${name}" from the catalogue?`)) {
@@ -420,88 +466,36 @@ export default function AdminPage() {
     }
   };
 
-  // If unauthorized, show administrator authentication gate or customer access-denied
+  // Middleware and server APIs enforce the same role boundary; this is the UI fallback.
   if (!isUnlocked) {
-    const isCustomer = user && user.role === 'customer';
+    const isCustomer = user && (user.role === 'user' || user.role === 'customer');
 
     return (
       <div className="min-h-screen flex flex-col bg-[#FCFBF7]">
         <Navbar />
         <main className="flex-1 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl border border-[#EAE3D9] p-8 max-w-md w-full shadow-xl text-center space-y-6">
-            <div className={`w-14 h-14 rounded-full text-white flex items-center justify-center mx-auto shadow-md ${
-              isCustomer ? 'bg-amber-600' : 'bg-gradient-to-tr from-[#9A7513] to-[#DFBE58]'
-            }`}>
+            <div className="w-14 h-14 rounded-full bg-amber-600 text-white flex items-center justify-center mx-auto shadow-md">
               {isCustomer ? <AlertCircle className="w-7 h-7" /> : <ShieldCheck className="w-7 h-7" />}
             </div>
 
             <div>
               <h1 className="font-serif-luxury text-2xl font-bold text-[#231B15]">
-                {isCustomer ? 'Access Restricted' : 'Admin Portal'}
+                {isCustomer ? 'Access Restricted' : 'Administrator Sign In Required'}
               </h1>
               <p className="text-xs text-[#786C63] mt-1">
                 {isCustomer
                   ? 'Your account does not have administrative privileges. Only designated administrators may access this portal.'
-                  : 'Please sign in with an authorized administrator account to access dashboard management.'}
+                  : 'Sign in with an account assigned Admin or Super Admin access.'}
               </p>
             </div>
 
-            {isCustomer ? (
-              <div className="space-y-3 pt-2">
-                <Link
-                  href="/customer"
-                  className="w-full py-2.5 px-4 rounded-lg bg-[#231B15] hover:bg-[#3D3027] text-white text-xs font-semibold tracking-wider uppercase transition-colors inline-block"
-                >
-                  Return to Customer Portal
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <Link
-                  href="/login"
-                  className="w-full py-2.5 px-4 rounded-lg bg-[#231B15] hover:bg-[#3D3027] text-white text-xs font-semibold tracking-wider uppercase transition-colors inline-block"
-                >
-                  Sign In with Clerk
-                </Link>
-
-                <div className="relative my-4">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-[#EAE3D9]"></div>
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white px-2 text-[#786C63] text-[10px] tracking-wider">Or Emergency Admin Key</span>
-                  </div>
-                </div>
-
-                {authError && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span>{authError}</span>
-                  </div>
-                )}
-
-                <form onSubmit={handleUnlockWithPasscode} className="space-y-3">
-                  <div className="relative">
-                    <Lock className="w-4 h-4 text-[#786C63] absolute left-3.5 top-3 pointer-events-none" />
-                    <input
-                      type="password"
-                      value={passcode}
-                      onChange={e => setPasscode(e.target.value)}
-                      placeholder="Enter server admin key..."
-                      className="w-full bg-[#F6F1EC] text-sm text-[#231B15] pl-10 pr-3 py-2 rounded-lg border border-[#EAE3D9] focus:outline-none focus:border-[#C59B27]"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={verifying}
-                    className="w-full py-2 px-4 rounded-lg bg-[#F6F1EC] hover:bg-[#EAE3D9] text-[#231B15] text-xs font-semibold tracking-wider uppercase transition-colors border border-[#EAE3D9] disabled:opacity-50"
-                  >
-                    {verifying ? 'Verifying...' : 'Unlock with Admin Key'}
-                  </button>
-                </form>
-              </div>
-            )}
+            <Link
+              href={isCustomer ? '/customer' : '/login'}
+              className="w-full py-2.5 px-4 rounded-lg bg-[#231B15] hover:bg-[#3D3027] text-white text-xs font-semibold tracking-wider uppercase transition-colors inline-block"
+            >
+              {isCustomer ? 'Return to Customer Portal' : 'Sign In'}
+            </Link>
 
             <div className="pt-2 border-t border-[#EAE3D9] text-[11px] text-[#786C63]">
               <span>Protected portal. Role-based access is strictly enforced on the server.</span>
@@ -523,11 +517,11 @@ export default function AdminPage() {
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest text-[#9A7513] uppercase mb-1">
               <ShieldCheck className="w-4 h-4 text-[#C59B27]" />
-              <span>LIVE LOVE LIGHT • CATALOGUE ADMINISTRATION</span>
+              <span>{isSuperAdminRole ? 'LIVE LOVE LIGHT • SUPER ADMINISTRATION' : 'LIVE LOVE LIGHT • PRODUCT MANAGEMENT'}</span>
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="font-serif-luxury text-3xl sm:text-4xl font-bold text-[#231B15]">
-                Catalogue & Marketplace Control
+                {isSuperAdminRole ? 'Super Admin Control Center' : 'Product Management'}
               </h1>
               {isSuperAdminRole ? (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-[#F4E8C1] text-[#9A7513] border border-[#C59B27]/40 shadow-xs">
@@ -537,7 +531,7 @@ export default function AdminPage() {
               ) : isProductManagerRole ? (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-teal-50 text-teal-800 border border-teal-200 shadow-xs">
                   <Lock className="w-3.5 h-3.5 text-teal-700" />
-                  Product Manager
+                  Admin
                 </span>
               ) : null}
             </div>
@@ -576,29 +570,35 @@ export default function AdminPage() {
           >
             <span>Products ({products.length})</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('categories')}
-            className={`pb-3 px-4 border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'categories'
-                ? 'border-[#231B15] text-[#231B15]'
-                : 'border-transparent text-[#786C63] hover:text-[#231B15]'
-            }`}
-          >
-            <span>Categories ({categories.length})</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('analytics')}
-            className={`pb-3 px-4 border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'analytics'
-                ? 'border-[#231B15] text-[#231B15]'
-                : 'border-transparent text-[#786C63] hover:text-[#231B15]'
-            }`}
-          >
-            <BarChart3 className="w-3.5 h-3.5 text-[#C59B27]" />
-            <span>Marketplace Clicks ({clicks.length})</span>
-          </button>
+          {isAdminRole && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('categories')}
+              className={`pb-3 px-4 border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
+                activeTab === 'categories'
+                  ? 'border-[#231B15] text-[#231B15]'
+                  : 'border-transparent text-[#786C63] hover:text-[#231B15]'
+              }`}
+            >
+              <span>Categories ({categories.length})</span>
+            </button>
+          )}
+          {isSuperAdminRole && (
+            <>
+              <button
+                type="button"
+                onClick={() => setActiveTab('analytics')}
+                className={`pb-3 px-4 border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
+                  activeTab === 'analytics'
+                    ? 'border-[#231B15] text-[#231B15]'
+                    : 'border-transparent text-[#786C63] hover:text-[#231B15]'
+                }`}
+              >
+                <BarChart3 className="w-3.5 h-3.5 text-[#C59B27]" />
+                <span>Marketplace Clicks ({clicks.length})</span>
+              </button>
+            </>
+          )}
           {isSuperAdminRole && (
             <button
               type="button"
@@ -613,11 +613,51 @@ export default function AdminPage() {
               <span>Admin Users & Roles</span>
             </button>
           )}
+          {isSuperAdminRole && (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('orders');
+                  void loadOrders();
+                }}
+                className={`pb-3 px-4 border-b-2 transition-all whitespace-nowrap ${activeTab === 'orders' ? 'border-[#231B15] text-[#231B15]' : 'border-transparent text-[#786C63]'}`}
+              >
+                Orders ({orders.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('settings')}
+                className={`pb-3 px-4 border-b-2 transition-all whitespace-nowrap ${activeTab === 'settings' ? 'border-[#231B15] text-[#231B15]' : 'border-transparent text-[#786C63]'}`}
+              >
+                Settings
+              </button>
+            </>
+          )}
         </div>
 
         {/* TAB 1: Products Table */}
         {activeTab === 'products' && (
           <div className="bg-white rounded-2xl border border-[#EAE3D9] shadow-sm overflow-hidden">
+            <div className="flex flex-col sm:flex-row gap-3 p-4 border-b border-[#EAE3D9]">
+              <input
+                type="search"
+                value={productQuery}
+                onChange={event => setProductQuery(event.target.value)}
+                placeholder="Search products, descriptions, fragrances..."
+                aria-label="Search products"
+                className="flex-1 min-w-0 bg-[#FCFBF7] border border-[#EAE3D9] rounded-lg px-3 py-2 text-xs"
+              />
+              <select value={productCategoryFilter} onChange={event => setProductCategoryFilter(event.target.value)} aria-label="Filter by category" className="bg-white border border-[#EAE3D9] rounded-lg px-3 py-2 text-xs">
+                <option value="all">All categories</option>
+                {categories.map(category => <option key={category} value={category}>{category}</option>)}
+              </select>
+              <select value={productSort} onChange={event => setProductSort(event.target.value as typeof productSort)} aria-label="Sort products" className="bg-white border border-[#EAE3D9] rounded-lg px-3 py-2 text-xs">
+                <option value="name">Name A to Z</option>
+                <option value="price-low">Price low to high</option>
+                <option value="price-high">Price high to low</option>
+              </select>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs text-[#231B15]">
                 <thead className="bg-[#F6F1EC] text-[#786C63] uppercase tracking-wider text-[10px] font-semibold border-b border-[#EAE3D9]">
@@ -626,13 +666,14 @@ export default function AdminPage() {
                     <th className="py-3 px-4">Category</th>
                     <th className="py-3 px-4">Fragrance</th>
                     <th className="py-3 px-4">Price</th>
-                    <th className="py-3 px-4">Marketplaces</th>
+                    <th className="py-3 px-4">Stock</th>
+                    {isSuperAdminRole && <th className="py-3 px-4">Marketplaces</th>}
                     <th className="py-3 px-4">Status</th>
                     <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#EAE3D9]">
-                  {products.map(p => (
+                  {visibleProducts.map(p => (
                     <tr key={p.id} className="hover:bg-[#FCFBF7] transition-colors">
                       <td className="py-3 px-4 flex items-center gap-3">
                         <div className="w-12 h-12 rounded-lg bg-[#F6F1EC] overflow-hidden shrink-0 relative border border-[#EAE3D9]">
@@ -658,7 +699,10 @@ export default function AdminPage() {
                       <td className="py-3 px-4 font-bold text-[#231B15] whitespace-nowrap">
                         ₹{p.price}
                       </td>
-                      <td className="py-3 px-4 whitespace-nowrap">
+                      <td className="py-3 px-4 text-[#786C63] whitespace-nowrap">
+                        {p.stockQuantity ?? (p.inStock ? 'In stock' : '0')}
+                      </td>
+                      {isSuperAdminRole && <td className="py-3 px-4 whitespace-nowrap">
                         <div className="flex items-center gap-1">
                           {p.marketplaces?.amazon && (
                             <span className="bg-[#FF9900]/15 text-[#8A5200] px-1.5 py-0.5 rounded text-[10px] font-bold">
@@ -676,7 +720,7 @@ export default function AdminPage() {
                             </span>
                           )}
                         </div>
-                      </td>
+                      </td>}
                       <td className="py-3 px-4 whitespace-nowrap">
                         {p.inStock ? (
                           <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded">
@@ -687,11 +731,14 @@ export default function AdminPage() {
                             Sold Out
                           </span>
                         )}
-                        {p.featured && (
+                        {isAdminRole && p.featured && (
                           <span className="ml-1 text-[10px] font-bold text-[#9A7513] bg-[#F4E8C1] px-1.5 py-0.5 rounded">
                             Featured
                           </span>
                         )}
+                        <span className={`ml-1 text-[10px] font-bold ${p.active ? 'text-emerald-800' : 'text-amber-800'}`}>
+                          {p.active ? 'Published' : 'Draft'}
+                        </span>
                       </td>
                       <td className="py-3 px-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-2">
@@ -711,7 +758,7 @@ export default function AdminPage() {
                           >
                             <Pencil className="w-4 h-4" />
                           </button>
-                          {isSuperAdminRole ? (
+                          {(isSuperAdminRole || adminCanDeleteProducts) && (
                             <button
                               type="button"
                               onClick={() => handleDeleteProduct(p.id, p.name)}
@@ -720,13 +767,6 @@ export default function AdminPage() {
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
-                          ) : (
-                            <span
-                              className="p-1.5 text-gray-400 cursor-not-allowed opacity-40"
-                              title="Delete permission restricted to Super Administrators"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </span>
                           )}
                         </div>
                       </td>
@@ -737,25 +777,13 @@ export default function AdminPage() {
             </div>
 
             <div className="p-4 bg-[#F6F1EC] border-t border-[#EAE3D9] flex items-center justify-between text-xs text-[#786C63]">
-              <span>Total products listed: {products.length}</span>
-              <button
-                type="button"
-                onClick={async () => {
-                  if (confirm('Reset catalogue back to initial default candle fixtures?')) {
-                    resetToInitialProducts();
-                    await refreshData();
-                  }
-                }}
-                className="text-[#9A7513] font-semibold hover:underline"
-              >
-                Reset Default Sample Catalogue
-              </button>
+              <span>Showing {visibleProducts.length} of {products.length} products</span>
             </div>
           </div>
         )}
 
         {/* TAB 2: Categories Manager */}
-        {activeTab === 'categories' && (
+        {activeTab === 'categories' && isAdminRole && (
           <div className="bg-white rounded-2xl border border-[#EAE3D9] p-6 shadow-sm space-y-6">
             <div>
               <h3 className="font-serif-luxury text-xl font-bold text-[#231B15]">
@@ -815,7 +843,7 @@ export default function AdminPage() {
         )}
 
         {/* TAB 3: Marketplace Click Analytics */}
-        {activeTab === 'analytics' && (
+        {activeTab === 'analytics' && isSuperAdminRole && (
           <div className="bg-white rounded-2xl border border-[#EAE3D9] p-6 shadow-sm space-y-6">
             <div>
               <h3 className="font-serif-luxury text-xl font-bold text-[#231B15]">
@@ -905,7 +933,7 @@ export default function AdminPage() {
                   <span>Admin User Registry & Role Assignment</span>
                 </h3>
                 <p className="text-xs text-[#786C63] mt-1">
-                  Assign trusted Product Manager or Super Admin access. Customer accounts without assigned roles cannot access administrative tools.
+                  Assign Admin or Super Admin access to registered accounts. Admins can manage products and prices; only Super Admins can manage links, publishing, and roles.
                 </p>
               </div>
               <button
@@ -939,7 +967,7 @@ export default function AdminPage() {
               <div className="text-xs text-[#786C63] space-y-1">
                 <p className="font-semibold text-[#231B15]">Role-Based Access Control Rules:</p>
                 <p>• <strong>SUPER_ADMIN</strong>: Has unrestricted authority across products, pricing, marketplace links, publishing, and role assignment.</p>
-                <p>• <strong>PRODUCT_MANAGER</strong>: Can manage product details, descriptions, notes, fragrance, prices, and imagery. Marketplace destination links are read-only and preserved by server validation.</p>
+                <p>• <strong>ADMIN</strong>: Can manage product details, categories, prices, stock, and publishing. Marketplace links, orders, settings, and role assignment are restricted.</p>
                 <p>• <strong>Last Super Admin Protection</strong>: The system rejects any attempt to demote or revoke the last active Super Administrator.</p>
               </div>
             </div>
@@ -952,6 +980,7 @@ export default function AdminPage() {
                     <th className="py-3 px-4">User</th>
                     <th className="py-3 px-4">Current Role</th>
                     <th className="py-3 px-4">Created / Registered</th>
+                    <th className="py-3 px-4">Last Sign In</th>
                     <th className="py-3 px-4 text-right">Role Actions</th>
                   </tr>
                 </thead>
@@ -963,34 +992,37 @@ export default function AdminPage() {
                         <div className="text-[11px] text-[#786C63]">{u.email || u.phoneNumber || u.id}</div>
                       </td>
                       <td className="py-3 px-4">
-                        {u.role === 'super_admin' || u.role === 'admin' ? (
+                        {u.role === 'super_admin' ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#F4E8C1] text-[#9A7513] border border-[#C59B27]/30">
                             <ShieldCheck className="w-3 h-3" />
                             Super Admin
                           </span>
-                        ) : u.role === 'product_manager' ? (
+                        ) : u.role === 'admin' || u.role === 'product_manager' ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-teal-50 text-teal-800 border border-teal-200">
                             <Lock className="w-3 h-3 text-teal-700" />
-                            Product Manager
+                            Admin
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#786C63] bg-[#F6F1EC]">
-                            Customer
+                            User
                           </span>
                         )}
                       </td>
                       <td className="py-3 px-4 text-[#786C63] text-[11px]">
                         {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Active Member'}
                       </td>
+                      <td className="py-3 px-4 text-[#786C63] text-[11px]">
+                        {u.lastSignInAt ? new Date(u.lastSignInAt).toLocaleString() : 'Never signed in'}
+                      </td>
                       <td className="py-3 px-4 text-right">
                         <div className="inline-flex items-center gap-1.5 justify-end">
-                          {u.role !== 'product_manager' && (
+                          {u.role !== 'admin' && u.role !== 'product_manager' && (
                             <button
                               type="button"
-                              onClick={() => handleUpdateRole(u.id, 'product_manager')}
+                              onClick={() => handleUpdateRole(u.id, 'admin')}
                               className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 transition-colors"
                             >
-                              Make Product Manager
+                              Make Admin
                             </button>
                           )}
                           {u.role !== 'super_admin' && (
@@ -1002,12 +1034,12 @@ export default function AdminPage() {
                               Promote Super Admin
                             </button>
                           )}
-                          {u.role !== 'customer' && (
+                          {u.role !== 'user' && u.role !== 'customer' && (
                             <button
                               type="button"
                               onClick={() => {
                                 if (confirm(`Revoke administrative access from ${u.displayName || u.email}?`)) {
-                                  handleUpdateRole(u.id, 'customer');
+                                  handleUpdateRole(u.id, 'user');
                                 }
                               }}
                               className="px-2 py-1 rounded-lg text-[11px] font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors"
@@ -1021,7 +1053,7 @@ export default function AdminPage() {
                   ))}
                   {adminUsers.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="py-8 text-center text-[#786C63]">
+                      <td colSpan={5} className="py-8 text-center text-[#786C63]">
                         {usersLoading ? 'Loading admin user directory...' : 'No external users registered yet. New users who sign in via Clerk can be assigned administrative roles here.'}
                       </td>
                     </tr>
@@ -1030,6 +1062,68 @@ export default function AdminPage() {
               </table>
             </div>
           </div>
+        )}
+
+        {activeTab === 'orders' && isSuperAdminRole && (
+          <section className="bg-white rounded-2xl border border-[#EAE3D9] shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between gap-4 p-5 border-b border-[#EAE3D9]">
+              <div>
+                <h2 className="font-serif-luxury text-xl font-bold text-[#231B15]">Orders</h2>
+                <p className="text-xs text-[#786C63] mt-1">Review orders and update fulfillment/payment status.</p>
+              </div>
+              <button type="button" onClick={loadOrders} disabled={ordersLoading} className="p-2.5 border border-[#EAE3D9] rounded-lg bg-white" aria-label="Refresh orders" title="Refresh orders">
+                <RefreshCw className={`w-4 h-4 ${ordersLoading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+            {roleActionError && <p role="alert" className="m-4 p-3 rounded-lg bg-red-50 text-red-700 text-xs">{roleActionError}</p>}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#F6F1EC] text-[#786C63] uppercase text-[10px]">
+                  <tr>
+                    <th className="p-3">Order</th><th className="p-3">Customer ID</th><th className="p-3">Items</th><th className="p-3">Total</th><th className="p-3">Payment</th><th className="p-3">Fulfillment</th><th className="p-3">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#EAE3D9]">
+                  {orders.map(order => (
+                    <tr key={order.id}>
+                      <td className="p-3 font-semibold">{order.id}</td>
+                      <td className="p-3">{order.customerId}</td>
+                      <td className="p-3">{order.items?.length || 0}</td>
+                      <td className="p-3 font-semibold">₹{order.totalAmount}</td>
+                      <td className="p-3">
+                        <select value={order.paymentStatus} onChange={event => void handleUpdateOrder(order.id, { paymentStatus: event.target.value as Order['paymentStatus'] })} className="bg-white border border-[#EAE3D9] rounded px-2 py-1">
+                          {['pending', 'paid', 'failed', 'refunded'].map(status => <option key={status} value={status}>{status}</option>)}
+                        </select>
+                      </td>
+                      <td className="p-3">
+                        <select value={order.orderStatus} onChange={event => void handleUpdateOrder(order.id, { orderStatus: event.target.value as Order['orderStatus'] })} className="bg-white border border-[#EAE3D9] rounded px-2 py-1">
+                          {['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'].map(status => <option key={status} value={status}>{status}</option>)}
+                        </select>
+                      </td>
+                      <td className="p-3 whitespace-nowrap">{new Date(order.createdAt).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                  {!ordersLoading && orders.length === 0 && <tr><td colSpan={7} className="p-8 text-center text-[#786C63]">No orders found.</td></tr>}
+                  {ordersLoading && <tr><td colSpan={7} className="p-8 text-center text-[#786C63]">Loading orders...</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        {activeTab === 'settings' && isSuperAdminRole && (
+          <section className="bg-white rounded-2xl border border-[#EAE3D9] p-6 shadow-sm space-y-5">
+            <div>
+              <h2 className="font-serif-luxury text-xl font-bold text-[#231B15]">Administrator Permissions</h2>
+              <p className="text-xs text-[#786C63] mt-1">Sensitive actions remain disabled for Admins unless explicitly enabled here.</p>
+            </div>
+            {roleActionError && <p role="alert" className="p-3 rounded-lg bg-red-50 text-red-700 text-xs">{roleActionError}</p>}
+            <label className="flex items-start gap-3 border-t border-[#EAE3D9] pt-5 text-sm">
+              <input type="checkbox" checked={adminCanDeleteProducts} disabled={settingsSaving} onChange={event => void handleAdminDeletionSetting(event.target.checked)} className="mt-0.5 h-4 w-4" />
+              <span><strong className="block text-[#231B15]">Allow Admins to delete products</strong><span className="text-xs text-[#786C63]">Off by default. Super Admins can always delete products.</span></span>
+            </label>
+            {settingsSaving && <p className="text-xs text-[#786C63]">Saving permission…</p>}
+          </section>
         )}
       </main>
 
@@ -1234,7 +1328,7 @@ export default function AdminPage() {
                 </div>
 
                 {/* Price and Specs */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                   <div>
                     <label className="block font-semibold text-[#231B15] mb-1">
                       Selling Price (INR) *
@@ -1255,6 +1349,19 @@ export default function AdminPage() {
                       type="number"
                       value={formOriginalPrice}
                       onChange={e => setFormOriginalPrice(Number(e.target.value))}
+                      className="w-full bg-white text-sm text-[#231B15] p-2.5 rounded-xl border border-[#EAE3D9]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-[#231B15] mb-1">
+                      Stock Quantity
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={formStockQuantity}
+                      onChange={e => setFormStockQuantity(Number(e.target.value))}
                       className="w-full bg-white text-sm text-[#231B15] p-2.5 rounded-xl border border-[#EAE3D9]"
                     />
                   </div>
@@ -1299,7 +1406,8 @@ export default function AdminPage() {
                   </p>
                 </div>
 
-                {/* Marketplace URLs (Super Admin Only vs Product Manager Read-Only) */}
+                {/* Marketplace URLs are visible only to Super Admins. */}
+                {isSuperAdminRole && (
                 <div className="p-4 bg-white rounded-2xl border border-[#EAE3D9] space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="font-bold text-sm text-[#231B15] flex items-center gap-1.5">
@@ -1385,9 +1493,11 @@ export default function AdminPage() {
                     </div>
                   </div>
                 </div>
+                )}
 
                 {/* Flags: Featured, In Stock, Active */}
                 <div className="flex flex-wrap items-center gap-6 pt-2">
+                  {isAdminRole && (
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -1397,6 +1507,7 @@ export default function AdminPage() {
                     />
                     <span className="font-semibold text-[#231B15]">Mark as Featured</span>
                   </label>
+                  )}
 
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -1408,18 +1519,17 @@ export default function AdminPage() {
                     <span className="font-semibold text-[#231B15]">In Stock</span>
                   </label>
 
-                  <label className={`flex items-center gap-2 ${isSuperAdminRole ? 'cursor-pointer' : 'cursor-not-allowed opacity-75'}`}>
-                    <input
-                      type="checkbox"
-                      disabled={!isSuperAdminRole}
-                      checked={formActive}
-                      onChange={e => setFormActive(e.target.checked)}
-                      className="w-4 h-4 rounded text-[#C59B27]"
-                    />
-                    <span className="font-semibold text-[#231B15]">
-                      Active in Catalogue {!isSuperAdminRole && <span className="text-[10px] text-[#786C63] font-normal">(Super Admin Only)</span>}
-                    </span>
-                  </label>
+                  {isAdminRole && (
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formActive}
+                        onChange={e => setFormActive(e.target.checked)}
+                        className="w-4 h-4 rounded text-[#C59B27]"
+                      />
+                      <span className="font-semibold text-[#231B15]">Active in Catalogue</span>
+                    </label>
+                  )}
                 </div>
 
                 {/* Submit Actions */}
@@ -1435,7 +1545,7 @@ export default function AdminPage() {
                     type="submit"
                     className="px-6 py-2.5 rounded-xl bg-[#231B15] hover:bg-[#3D3027] text-white font-semibold tracking-wider uppercase transition-colors"
                   >
-                    Save & Publish Candle
+                    {isSuperAdminRole ? 'Save & Publish Candle' : 'Save Product'}
                   </button>
                 </div>
               </form>

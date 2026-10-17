@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin, requireSuperAdmin, sanitizeProductFieldsForRole } from '@/lib/server-auth';
+import { requireAdmin, sanitizeProductFieldsForRole } from '@/lib/server-auth';
 import { getSupabaseServerClient, isSupabaseConfigured } from '@/lib/supabase';
 import { Product } from '@/types';
 import { getLocalProducts, setLocalProducts } from '@/lib/products';
@@ -35,6 +35,7 @@ export async function GET() {
               featured: Boolean(row.featured),
               active: Boolean(row.active),
               inStock: Boolean(row.in_stock),
+              stockQuantity: Number(row.stock_quantity ?? (row.in_stock ? 1 : 0)),
               burnTimeHours: row.burn_time_hours ?? 45,
               waxType: row.wax_type ?? '100% Botanical Soy Wax',
               weightGrams: row.weight_grams ?? 250,
@@ -69,8 +70,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Sanitize fields based on role: Product Manager cannot set marketplace links on create
+    // Sanitize Admin marketplace fields; Admin and Super Admin can control publishing.
     const { sanitized } = sanitizeProductFieldsForRole(body, null, admin.role);
+    const stockQuantity = Number(sanitized.stockQuantity ?? (sanitized.inStock === false ? 0 : 50));
+    if (!Number.isInteger(stockQuantity) || stockQuantity < 0) {
+      return NextResponse.json({ success: false, error: 'Stock quantity must be a non-negative whole number.' }, { status: 400 });
+    }
 
     const generatedSlug = (sanitized.slug as string)?.trim() ||
       (sanitized.name as string).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
@@ -92,7 +97,8 @@ export async function POST(req: NextRequest) {
       marketplaces: (sanitized.marketplaces as Product['marketplaces']) || {},
       featured: Boolean(sanitized.featured),
       active: Boolean(sanitized.active ?? true),
-      inStock: sanitized.inStock !== false,
+      inStock: sanitized.inStock !== false && stockQuantity > 0,
+      stockQuantity,
       burnTimeHours: sanitized.burnTimeHours ? Number(sanitized.burnTimeHours) : 45,
       waxType: (sanitized.waxType as string) || '100% Botanical Soy Wax',
       weightGrams: sanitized.weightGrams ? Number(sanitized.weightGrams) : 250,
@@ -105,7 +111,7 @@ export async function POST(req: NextRequest) {
     if (isSupabaseConfigured()) {
       const supabase = getSupabaseServerClient(true);
       if (supabase) {
-        const { error } = await supabase.from('products').upsert({
+        const { data, error } = await supabase.from('products').insert({
           name: newProduct.name,
           slug: newProduct.slug,
           description: newProduct.description,
@@ -120,18 +126,23 @@ export async function POST(req: NextRequest) {
           featured: newProduct.featured,
           active: newProduct.active,
           in_stock: newProduct.inStock,
+          stock_quantity: newProduct.stockQuantity,
           burn_time_hours: newProduct.burnTimeHours,
           wax_type: newProduct.waxType,
           weight_grams: newProduct.weightGrams,
           dimensions: newProduct.dimensions,
           updated_at: newProduct.updatedAt,
-        });
+        }).select('id, created_at').single();
 
         if (error) {
           return NextResponse.json(
             { success: false, error: `Database insertion failed: ${error.message}` },
             { status: 500 }
           );
+        }
+        if (data) {
+          newProduct.id = data.id;
+          newProduct.createdAt = data.created_at;
         }
       }
     }
@@ -144,7 +155,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       product: newProduct,
-      notice: admin.role === 'product_manager'
+      notice: admin.role !== 'super_admin'
         ? 'Product created. Marketplace links must be configured by a Super Administrator.'
         : undefined,
     });
@@ -196,6 +207,7 @@ export async function PUT(req: NextRequest) {
             featured: Boolean(data.featured),
             active: Boolean(data.active),
             inStock: Boolean(data.in_stock),
+            stockQuantity: Number(data.stock_quantity ?? (data.in_stock ? 1 : 0)),
             burnTimeHours: data.burn_time_hours ?? 45,
             waxType: data.wax_type ?? '100% Botanical Soy Wax',
             weightGrams: data.weight_grams ?? 250,
@@ -220,12 +232,17 @@ export async function PUT(req: NextRequest) {
     }
 
     // 2. Strict field sanitization:
-    // When Product Manager calls update, marketplace URLs MUST retain trusted values from existingProduct
+    // Restricted Admin updates retain trusted marketplace and publishing values from existingProduct.
     const { sanitized, rejectedMarketplaceAttempt } = sanitizeProductFieldsForRole(
       body,
       existingProduct as unknown as Record<string, unknown>,
       admin.role
     );
+
+    const stockQuantity = Number(sanitized.stockQuantity ?? existingProduct.stockQuantity ?? (existingProduct.inStock ? 1 : 0));
+    if (!Number.isInteger(stockQuantity) || stockQuantity < 0) {
+      return NextResponse.json({ success: false, error: 'Stock quantity must be a non-negative whole number.' }, { status: 400 });
+    }
 
     const updatedProduct: Product = {
       ...existingProduct,
@@ -241,7 +258,8 @@ export async function PUT(req: NextRequest) {
       marketplaces: sanitized.marketplaces as Product['marketplaces'], // Strictly enforced
       featured: sanitized.featured !== undefined ? Boolean(sanitized.featured) : existingProduct.featured,
       active: sanitized.active !== undefined ? Boolean(sanitized.active) : existingProduct.active,
-      inStock: sanitized.inStock !== undefined ? Boolean(sanitized.inStock) : existingProduct.inStock,
+      inStock: stockQuantity > 0 && (sanitized.inStock !== undefined ? Boolean(sanitized.inStock) : existingProduct.inStock),
+      stockQuantity,
       burnTimeHours: sanitized.burnTimeHours !== undefined ? Number(sanitized.burnTimeHours) : existingProduct.burnTimeHours,
       waxType: (sanitized.waxType as string) || existingProduct.waxType,
       updatedAt: new Date().toISOString(),
@@ -267,6 +285,7 @@ export async function PUT(req: NextRequest) {
             featured: updatedProduct.featured,
             active: updatedProduct.active,
             in_stock: updatedProduct.inStock,
+            stock_quantity: updatedProduct.stockQuantity,
             burn_time_hours: updatedProduct.burnTimeHours,
             wax_type: updatedProduct.waxType,
             updated_at: updatedProduct.updatedAt,
@@ -304,8 +323,21 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    // Only Super Admin can delete products
-    await requireSuperAdmin();
+    const admin = await requireAdmin();
+    if (admin.role !== 'super_admin') {
+      const supabase = getSupabaseServerClient(true);
+      const { data: setting, error } = supabase
+        ? await supabase
+            .from('site_settings')
+            .select('value')
+            .eq('key', 'admin_can_delete_products')
+            .maybeSingle()
+        : { data: null, error: null };
+      if (error) throw error;
+      if (setting?.value !== true) {
+        return NextResponse.json({ success: false, error: 'Product deletion is restricted by the Super Admin.' }, { status: 403 });
+      }
+    }
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');

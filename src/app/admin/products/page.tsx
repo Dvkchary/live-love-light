@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import AdminPage from '../page';
 
 export default function AdminProductsPage() {
-  redirect('/admin?tab=products');
+  return <AdminPage initialTab="products" />;
 }

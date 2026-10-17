@@ -77,9 +77,9 @@ export default function AccountPage() {
                     <h1 className="font-serif-luxury text-2xl sm:text-3xl font-bold text-[#231B15]">
                       {user.displayName}
                     </h1>
-                    {user.role === 'admin' && (
+                    {(user.role === 'admin' || user.role === 'product_manager' || user.role === 'super_admin') && (
                       <span className="text-[10px] font-bold uppercase tracking-wider text-[#9A7513] bg-[#F4E8C1] px-2 py-0.5 rounded">
-                        Administrator
+                        {user.role === 'super_admin' ? 'Super Admin' : 'Admin'}
                       </span>
                     )}
                   </div>
@@ -90,9 +90,9 @@ export default function AccountPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                {user.role === 'admin' && (
+                {(user.role === 'admin' || user.role === 'product_manager' || user.role === 'super_admin') && (
                   <Link
-                    href="/admin"
+                    href={user.role === 'super_admin' ? '/super-admin' : '/admin/products'}
                     className="px-4 py-2 rounded-xl bg-[#F4E8C1]/80 text-[#9A7513] text-xs font-semibold hover:bg-[#F4E8C1] transition-colors flex items-center gap-1.5"
                   >
                     <ShieldCheck className="w-4 h-4" />

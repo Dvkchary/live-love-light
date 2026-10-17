@@ -1,16 +1,25 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { clerkClient, clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
+import { canAccessPortalRoute } from '@/lib/portal-routing';
 
 const isPublicRoute = createRouteMatcher([
   '/login(.*)',
-  '/api/admin/verify(.*)',
+  '/',
+  '/customer(.*)',
+  '/product(.*)',
+  '/about(.*)',
+  '/contact(.*)',
+  '/privacy(.*)',
+  '/terms(.*)',
+  '/robots.txt',
+  '/sitemap.xml',
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims } = await auth();
   const pathname = req.nextUrl.pathname;
 
-  // 1. Unauthenticated visitors: strictly restricted to /login
+  // Keep the storefront public; other routes require a Clerk session.
   if (!userId) {
     if (isPublicRoute(req)) {
       return NextResponse.next();
@@ -26,32 +35,44 @@ export default clerkMiddleware(async (auth, req) => {
 
     // Redirect all page requests to the authentication page
     const loginUrl = new URL('/login', req.url);
+    loginUrl.searchParams.set('redirect_url', `${pathname}${req.nextUrl.search}`);
     return NextResponse.redirect(loginUrl);
   }
 
-  // 2. Authenticated users: Check role for admin routes
-  if (pathname.startsWith('/admin')) {
-    const rawRole =
+  const isAdminRoute = pathname.startsWith('/admin');
+  const isSuperAdminRoute = pathname.startsWith('/super-admin');
+  if (isAdminRoute || isSuperAdminRoute) {
+    let rawRole =
       (sessionClaims?.metadata as { role?: string })?.role ||
       (sessionClaims?.publicMetadata as { role?: string })?.role;
 
     const superAdminId = process.env.SUPER_ADMIN_CLERK_ID?.trim();
-    const productManagerId = process.env.PRODUCT_MANAGER_CLERK_ID?.trim();
+    const adminId = process.env.ADMIN_CLERK_ID?.trim() || process.env.PRODUCT_MANAGER_CLERK_ID?.trim();
 
-    const isDesignatedSuper = superAdminId && userId === superAdminId;
-    const isDesignatedPm = productManagerId && userId === productManagerId;
-    const hasAdminRole = rawRole === 'super_admin' || rawRole === 'admin' || rawRole === 'product_manager';
+    const isDesignatedSuper = Boolean(superAdminId && userId === superAdminId);
+    const isDesignatedAdmin = Boolean(adminId && userId === adminId);
 
-    // If an ordinary customer attempts to navigate to /admin, block & redirect to customer portal
-    if (!isDesignatedSuper && !isDesignatedPm && !hasAdminRole) {
-      // Return 403 if it's an API request
-      if (pathname.startsWith('/api/admin')) {
-        return NextResponse.json(
-          { success: false, error: 'Forbidden: Administrative privileges required.' },
-          { status: 403 }
-        );
+    if (!isDesignatedSuper && !isDesignatedAdmin && rawRole !== 'super_admin' && rawRole !== 'admin' && rawRole !== 'product_manager') {
+      try {
+        const client = await clerkClient();
+        const user = await client.users.getUser(userId);
+        rawRole = (user.publicMetadata as { role?: string })?.role;
+      } catch {
+        rawRole = undefined;
       }
-      return NextResponse.redirect(new URL('/customer?error=access_denied', req.url));
+    }
+
+    const isSuperAdmin = isDesignatedSuper || rawRole === 'super_admin';
+    const isAdmin = isDesignatedAdmin || rawRole === 'admin' || rawRole === 'product_manager';
+
+    const resolvedRole = isSuperAdmin ? 'super_admin' : isAdmin ? 'admin' : 'user';
+    if (!canAccessPortalRoute(resolvedRole, pathname)) {
+      if (pathname.startsWith('/api/')) {
+        const required = isSuperAdminRoute ? 'Super Admin' : 'Admin';
+        return NextResponse.json({ error: `${required} access required.` }, { status: 403 });
+      }
+      if (isSuperAdminRoute && isAdmin) return NextResponse.redirect(new URL('/admin/products', req.url));
+      return NextResponse.redirect(new URL('/?error=access_denied', req.url));
     }
   }
 

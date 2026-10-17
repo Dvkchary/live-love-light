@@ -1,12 +1,12 @@
 /**
  * Script: manage-roles.mjs
- * Purpose: Manage admin roles (product_manager, super_admin, customer) via CLI.
+ * Purpose: Manage admin roles (user, admin, super_admin) via CLI.
  *
  * Usage:
- *   node scripts/manage-roles.mjs <user-email-or-userId> <product_manager|super_admin|customer>
+ *   node scripts/manage-roles.mjs <user-email-or-userId> <user|admin|super_admin>
  *
  * Example:
- *   node scripts/manage-roles.mjs manager@example.com product_manager
+ *   node scripts/manage-roles.mjs manager@example.com admin
  */
 
 import { readFileSync, existsSync } from 'node:fs';
@@ -42,7 +42,7 @@ if (!clerkSecretKey) {
 const identifier = process.argv[2];
 const targetRole = process.argv[3]?.toLowerCase();
 
-const VALID_ROLES = ['product_manager', 'super_admin', 'customer'];
+const VALID_ROLES = ['user', 'admin', 'product_manager', 'super_admin', 'customer'];
 
 async function clerkFetch(endpoint, options = {}) {
   const url = `https://api.clerk.com/v1${endpoint}`;
@@ -91,10 +91,11 @@ async function run() {
       process.exit(1);
     }
 
-    const currentRole = targetUser.public_metadata?.role || 'customer';
+    const currentRole = targetUser.public_metadata?.role || 'user';
+    const normalizedRole = targetRole === 'customer' ? 'user' : targetRole === 'product_manager' ? 'admin' : targetRole;
 
     // 2. Safeguard: Prevent removing the last Super Admin
-    if (currentRole === 'super_admin' && targetRole !== 'super_admin') {
+    if (currentRole === 'super_admin' && normalizedRole !== 'super_admin') {
       const allUsers = await clerkFetch('/users?limit=100');
       const superAdmins = (allUsers || []).filter(u => u.public_metadata?.role === 'super_admin');
       if (superAdmins.length <= 1) {
@@ -109,7 +110,7 @@ async function run() {
       body: JSON.stringify({
         public_metadata: {
           ...(targetUser.public_metadata || {}),
-          role: targetRole
+          role: normalizedRole
         }
       })
     });
@@ -131,7 +132,7 @@ async function run() {
             'Prefer': 'return=minimal'
           },
           body: JSON.stringify({
-            role: targetRole,
+            role: normalizedRole,
             updated_at: new Date().toISOString()
           })
         });

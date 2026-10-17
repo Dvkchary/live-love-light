@@ -13,21 +13,21 @@ export default function LoginPage() {
 
   // Automatic portal redirection after successful authentication
   useEffect(() => {
-    if (isLoaded && isSignedIn && user) {
-      // Check role
-      const rawRole = (user.publicMetadata as { role?: string })?.role;
-      const superAdminId = process.env.NEXT_PUBLIC_SUPER_ADMIN_CLERK_ID?.trim();
-      const productManagerId = process.env.NEXT_PUBLIC_PRODUCT_MANAGER_CLERK_ID?.trim();
+    if (!isLoaded || !isSignedIn || !user) return;
+    let cancelled = false;
 
-      const isSuper = rawRole === 'super_admin' || rawRole === 'admin' || (superAdminId && user.id === superAdminId);
-      const isPm = rawRole === 'product_manager' || (productManagerId && user.id === productManagerId);
+    fetch('/api/auth/portal', { cache: 'no-store' })
+      .then(response => response.ok ? response.json() : null)
+      .then(data => {
+        if (!cancelled) router.replace(typeof data?.redirectTo === 'string' ? data.redirectTo : '/');
+      })
+      .catch(() => {
+        if (!cancelled) router.replace('/');
+      });
 
-      if (isSuper || isPm) {
-        router.replace('/admin');
-      } else {
-        router.replace('/customer');
-      }
-    }
+    return () => {
+      cancelled = true;
+    };
   }, [isLoaded, isSignedIn, user, router]);
 
   const clerkAppearance = {

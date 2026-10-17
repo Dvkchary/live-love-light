@@ -4,86 +4,64 @@ import { clerkClient } from '@clerk/nextjs/server';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { AdminUserSummary, UserRole } from '@/types';
 
+async function getAllClerkUsers() {
+  const client = await clerkClient();
+  const users = [];
+  let totalCount = Number.POSITIVE_INFINITY;
+  let offset = 0;
+
+  while (offset < totalCount) {
+    const page = await client.users.getUserList({
+      limit: 100,
+      offset,
+      orderBy: '-created_at',
+    });
+    if (page.data.length === 0) break;
+    users.push(...page.data);
+    offset += page.data.length;
+    totalCount = page.totalCount;
+  }
+
+  return users;
+}
+
 export async function GET() {
   try {
     await requireSuperAdmin();
 
     const adminUsers: AdminUserSummary[] = [];
 
-    // 1. Fetch from Clerk Backend API
-    try {
-      const client = await clerkClient();
-      const clerkUsers = await client.users.getUserList({
-        limit: 100,
-        orderBy: '-created_at',
+    const clerkUsers = await getAllClerkUsers();
+
+    for (const u of clerkUsers) {
+        const rawRole = (u.publicMetadata as { role?: string })?.role;
+        const role: UserRole = rawRole === 'super_admin'
+          ? 'super_admin'
+          : rawRole === 'admin' || rawRole === 'product_manager'
+          ? 'admin'
+          : 'user';
+
+        const designatedDisplayName =
+          role === 'super_admin'
+            ? 'Live Love Light Owner'
+            : role === 'admin'
+            ? 'Live Love Light Admin'
+            : (u.publicMetadata as { displayName?: string })?.displayName ||
+              u.fullName ||
+              u.firstName ||
+              u.username ||
+              u.primaryEmailAddress?.emailAddress?.split('@')[0] ||
+              'User';
+
+      adminUsers.push({
+        id: u.id,
+        email: u.primaryEmailAddress?.emailAddress,
+        phoneNumber: u.primaryPhoneNumber?.phoneNumber,
+        displayName: designatedDisplayName,
+        role,
+        createdAt: u.createdAt ? new Date(u.createdAt).toISOString() : undefined,
+        lastSignInAt: u.lastSignInAt ? new Date(u.lastSignInAt).toISOString() : undefined,
       });
-
-      if (clerkUsers?.data) {
-        for (const u of clerkUsers.data) {
-          const rawRole = (u.publicMetadata as { role?: string })?.role;
-          const role: UserRole =
-            rawRole === 'super_admin' || rawRole === 'admin'
-              ? 'super_admin'
-              : rawRole === 'product_manager'
-              ? 'product_manager'
-              : 'customer';
-
-          const designatedDisplayName =
-            role === 'super_admin'
-              ? 'Live Love Light Owner'
-              : role === 'product_manager'
-              ? 'Live Love Light Manager'
-              : (u.publicMetadata as { displayName?: string })?.displayName ||
-                u.fullName ||
-                u.firstName ||
-                u.username ||
-                u.primaryEmailAddress?.emailAddress?.split('@')[0] ||
-                'User';
-
-          adminUsers.push({
-            id: u.id,
-            email: u.primaryEmailAddress?.emailAddress,
-            phoneNumber: u.primaryPhoneNumber?.phoneNumber,
-            displayName: designatedDisplayName,
-            role,
-            createdAt: u.createdAt ? new Date(u.createdAt).toISOString() : undefined,
-            lastSignInAt: u.lastSignInAt ? new Date(u.lastSignInAt).toISOString() : undefined,
-          });
-        }
-      }
-    } catch (clerkErr) {
-      console.warn('Clerk user list fetch notice:', clerkErr);
-    }
-
-    // 2. Fetch from Supabase profiles if Clerk list is empty or for synchronization
-    try {
-      const supabase = getSupabaseServerClient(true);
-      if (supabase) {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, email, phone_number, display_name, role, created_at')
-          .order('created_at', { ascending: false });
-
-        if (profiles) {
-          for (const p of profiles) {
-            const existing = adminUsers.find(u => u.id === p.id);
-            if (!existing) {
-              adminUsers.push({
-                id: p.id,
-                email: p.email,
-                phoneNumber: p.phone_number,
-                displayName: p.display_name || p.email?.split('@')[0] || 'User',
-                role: (p.role as UserRole) || 'customer',
-                createdAt: p.created_at,
-              });
-            } else if (p.role && p.role !== 'customer') {
-              existing.role = p.role as UserRole;
-            }
-          }
-        }
-      }
-    } catch (sbErr) {
-      console.warn('Supabase profiles fetch notice:', sbErr);
     }
 
     return NextResponse.json({
@@ -110,64 +88,61 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!['customer', 'product_manager', 'super_admin'].includes(newRole)) {
+    if (!['user', 'customer', 'admin', 'product_manager', 'super_admin'].includes(newRole)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid role. Supported roles: "customer", "product_manager", "super_admin".' },
+        { success: false, error: 'Invalid role. Supported roles: "user", "admin", "super_admin".' },
         { status: 400 }
       );
     }
 
-    // Protection: Prevent demoting or removing the last remaining Super Admin
-    if (newRole !== 'super_admin') {
-      let superAdminCount = 0;
+    const assignedRole: UserRole =
+      newRole === 'customer' ? 'user' : newRole === 'product_manager' ? 'admin' : newRole;
+    const designatedSuperAdminId = process.env.SUPER_ADMIN_CLERK_ID?.trim();
+    let client;
+    let target;
+    try {
+      client = await clerkClient();
+      target = await client.users.getUser(targetUserId);
+    } catch {
+      return NextResponse.json({ success: false, error: 'Unable to verify target Clerk account.' }, { status: 404 });
+    }
+    const targetIsSuperAdmin =
+      targetUserId === designatedSuperAdminId ||
+      (target.publicMetadata as { role?: string })?.role === 'super_admin';
 
+    // Protect the last Super Admin only when that account is being demoted.
+    if (assignedRole !== 'super_admin' && targetIsSuperAdmin) {
       try {
-        const client = await clerkClient();
-        const allUsers = await client.users.getUserList({ limit: 100 });
-        for (const u of allUsers.data) {
+        const allUsers = await getAllClerkUsers();
+        const superAdminIds = new Set<string>();
+        for (const u of allUsers) {
           const r = (u.publicMetadata as { role?: string })?.role;
-          if (r === 'super_admin' || r === 'admin') {
-            superAdminCount++;
-          }
+          if (r === 'super_admin' || u.id === designatedSuperAdminId) superAdminIds.add(u.id);
+        }
+        if (superAdminIds.size <= 1) {
+          return NextResponse.json(
+            { success: false, error: 'Cannot demote or revoke the last Super Admin.' },
+            { status: 400 }
+          );
         }
       } catch {
-        // Fallback check Supabase profiles
-        const supabase = getSupabaseServerClient(true);
-        if (supabase) {
-          const { count } = await supabase
-            .from('profiles')
-            .select('*', { count: 'exact', head: true })
-            .in('role', ['super_admin', 'admin']);
-          superAdminCount = count || 0;
-        }
-      }
-
-      // If caller is the only super admin and is demoting themselves, or target is the last super admin
-      if (superAdminCount <= 1) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Security Constraint: Cannot remove or demote the last remaining Super Administrator in the system.',
-          },
-          { status: 400 }
-        );
+        return NextResponse.json({ success: false, error: 'Unable to verify remaining Super Admin accounts.' }, { status: 503 });
       }
     }
 
     const designatedDisplayName =
-      newRole === 'super_admin'
+      assignedRole === 'super_admin'
         ? 'Live Love Light Owner'
-        : newRole === 'product_manager'
-        ? 'Live Love Light Manager'
+        : assignedRole === 'admin'
+        ? 'Live Love Light Admin'
         : undefined;
 
     // 1. Update Clerk user metadata
     let clerkUpdated = false;
     try {
-      const client = await clerkClient();
       await client.users.updateUserMetadata(targetUserId, {
         publicMetadata: {
-          role: newRole,
+          role: assignedRole,
           ...(designatedDisplayName ? { displayName: designatedDisplayName } : {}),
           updatedBy: caller.userId,
           updatedAt: new Date().toISOString(),
@@ -184,7 +159,7 @@ export async function POST(req: NextRequest) {
       const supabase = getSupabaseServerClient(true);
       if (supabase) {
         const updatePayload: Record<string, unknown> = {
-          role: newRole,
+          role: assignedRole,
           updated_at: new Date().toISOString(),
         };
         if (designatedDisplayName) {
@@ -213,7 +188,7 @@ export async function POST(req: NextRequest) {
       success: true,
       updated: {
         userId: targetUserId,
-        role: newRole,
+        role: assignedRole,
         clerkUpdated,
         supabaseUpdated,
       },

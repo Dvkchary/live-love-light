@@ -94,7 +94,7 @@ export async function getAllProducts(): Promise<Product[]> {
           .eq('active', true)
           .order('created_at', { ascending: false });
 
-        if (!error && data && data.length > 0) {
+        if (!error && data) {
           const supabaseProducts: Product[] = data.map((row) => ({
             id: row.id,
             name: row.name,
@@ -111,6 +111,7 @@ export async function getAllProducts(): Promise<Product[]> {
             featured: Boolean(row.featured),
             active: Boolean(row.active),
             inStock: Boolean(row.in_stock),
+            stockQuantity: Number(row.stock_quantity ?? (row.in_stock ? 1 : 0)),
             burnTimeHours: row.burn_time_hours ?? 45,
             waxType: row.wax_type ?? '100% Botanical Soy Wax',
             weightGrams: row.weight_grams ?? 250,
@@ -155,12 +156,12 @@ export async function getProductById(id: string): Promise<Product | null> {
   return products.find(p => p.id === id) || null;
 }
 
-export async function saveProduct(product: Product): Promise<{ success: boolean; notice?: string }> {
+export async function saveProduct(product: Product, isUpdate?: boolean): Promise<{ success: boolean; notice?: string }> {
   // If in browser, execute mutation via secure server API enforcing role authorization & marketplace restrictions
   if (typeof window !== 'undefined') {
-    const isUpdate = Boolean(product.id && getLocalProducts().some(p => p.id === product.id));
+    const shouldUpdate = isUpdate ?? Boolean(product.id && getLocalProducts().some(p => p.id === product.id));
     const endpoint = '/api/admin/products';
-    const method = isUpdate ? 'PUT' : 'POST';
+    const method = shouldUpdate ? 'PUT' : 'POST';
 
     const res = await fetch(endpoint, {
       method,
@@ -270,6 +271,19 @@ export async function deleteProduct(id: string): Promise<void> {
 }
 
 export async function getAllCategories(): Promise<string[]> {
+  if (typeof window !== 'undefined') {
+    try {
+      const response = await fetch('/api/admin/categories', { cache: 'no-store' });
+      const data = await response.json().catch(() => ({}));
+      if (response.ok && Array.isArray(data.categories)) {
+        setLocalCategories(data.categories);
+        return data.categories;
+      }
+    } catch (error) {
+      console.warn('Category API unavailable, using local categories:', error);
+    }
+  }
+
   if (isFirebaseConfigured() && db) {
     try {
       const catDoc = await getDoc(doc(db, 'settings', 'categories'));
@@ -286,6 +300,20 @@ export async function getAllCategories(): Promise<string[]> {
 }
 
 export async function saveCategory(categoryName: string): Promise<void> {
+  if (typeof window !== 'undefined') {
+    const response = await fetch('/api/admin/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ category: categoryName }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || 'Failed to save category.');
+    }
+    setLocalCategories(data.categories || []);
+    return;
+  }
+
   const cats = getLocalCategories();
   if (!cats.includes(categoryName)) {
     const updated = [...cats, categoryName];
@@ -302,6 +330,18 @@ export async function saveCategory(categoryName: string): Promise<void> {
 }
 
 export async function deleteCategory(categoryName: string): Promise<void> {
+  if (typeof window !== 'undefined') {
+    const response = await fetch(`/api/admin/categories?category=${encodeURIComponent(categoryName)}`, {
+      method: 'DELETE',
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || 'Failed to delete category.');
+    }
+    setLocalCategories(data.categories || []);
+    return;
+  }
+
   const cats = getLocalCategories();
   const updated = cats.filter(c => c !== categoryName);
   setLocalCategories(updated);

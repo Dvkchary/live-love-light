@@ -5,11 +5,11 @@ export async function GET() {
   try {
     const auth = await getAuthenticatedUser();
 
-    if (!auth.isAuthenticated || auth.role === 'customer') {
+    if (!auth.isAuthenticated || !auth.permissions.canManageProductContent) {
       return NextResponse.json(
         {
           authenticated: false,
-          role: 'customer',
+          role: 'user',
           permissions: auth.permissions,
         },
         { status: 401 }
@@ -31,7 +31,7 @@ export async function GET() {
     }
     console.error('Failed to get admin session:', error);
     return NextResponse.json(
-      { authenticated: false, role: 'customer' },
+      { authenticated: false, role: 'user' },
       { status: 500 }
     );
   }

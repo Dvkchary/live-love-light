@@ -22,8 +22,6 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { execSync } from 'node:child_process';
-
 // Import pure authorization helpers
 import {
   getAdminPermissions,
@@ -34,37 +32,33 @@ import {
   canAccessAdminSettings,
   sanitizeProductFieldsForRole,
 } from '../src/lib/role-permissions.ts';
+import { canAccessPortalRoute, getPortalPath } from '../src/lib/portal-routing.ts';
 
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
 describe('Live Love Light — Production Roles & Portals Verification', () => {
 
   // --------------------------------------------------------------------------
   // Case 1: A logged-out visitor sees only the authentication page
   // --------------------------------------------------------------------------
-  test('1. A logged-out visitor sees only the authentication page (/login)', async () => {
-    // When unauthenticated visitor accesses /login, it loads with HTTP 200
+  test('1. The storefront is public and protected admin routes redirect to login', async () => {
     const loginRes = await fetch(`${BASE_URL}/login`, { redirect: 'manual' });
     assert.equal(loginRes.status, 200);
-    const loginText = await loginRes.text();
-    assert.ok(loginText.includes('LIVE LOVE LIGHT') || loginText.includes('Sign In'));
+    const storeRes = await fetch(`${BASE_URL}/`, { redirect: 'manual' });
+    assert.equal(storeRes.status, 200);
 
-    // When accessing protected /customer without auth, middleware redirects to /login
-    const customerRes = await fetch(`${BASE_URL}/customer`, { redirect: 'manual' });
-    assert.ok([302, 307, 308].includes(customerRes.status));
-    assert.ok(customerRes.headers.get('location')?.includes('/login'));
-
-    // When accessing protected /admin without auth, middleware redirects to /login
-    const adminRes = await fetch(`${BASE_URL}/admin`, { redirect: 'manual' });
-    assert.ok([302, 307, 308].includes(adminRes.status));
-    assert.ok(adminRes.headers.get('location')?.includes('/login'));
+    for (const route of ['/admin', '/admin/products', '/super-admin', '/super-admin/users', '/super-admin/settings']) {
+      const response = await fetch(`${BASE_URL}${route}`, { redirect: 'manual' });
+      assert.ok([302, 307, 308].includes(response.status), `${route} must require a session`);
+      assert.ok(response.headers.get('location')?.includes('/login'));
+    }
   });
 
   // --------------------------------------------------------------------------
   // Case 2: A visitor can create a normal customer account
   // --------------------------------------------------------------------------
-  test('2. A visitor can create a normal customer account (defaults to customer role)', () => {
-    const defaultPermissions = getAdminPermissions('customer');
+  test('2. New accounts default to the USER role', () => {
+    const defaultPermissions = getAdminPermissions('user');
     assert.equal(defaultPermissions.canManageProductContent, false);
     assert.equal(defaultPermissions.canManageMarketplaceLinks, false);
     assert.equal(defaultPermissions.canManagePublishing, false);
@@ -75,44 +69,26 @@ describe('Live Love Light — Production Roles & Portals Verification', () => {
   // --------------------------------------------------------------------------
   // Case 3: A customer login opens the customer portal
   // --------------------------------------------------------------------------
-  test('3. A customer login opens the customer portal (/customer)', () => {
-    const resolvePortalForRole = (role) => {
-      if (role === 'super_admin' || role === 'product_manager' || role === 'admin') {
-        return '/admin';
-      }
-      return '/customer';
-    };
-
-    assert.equal(resolvePortalForRole('customer'), '/customer');
+  test('3. A USER login opens the storefront (/)', () => {
+    assert.equal(getPortalPath('user'), '/');
+    assert.equal(getPortalPath('customer'), '/');
   });
 
   // --------------------------------------------------------------------------
   // Case 4: The Product Manager login opens the admin portal
   // --------------------------------------------------------------------------
-  test('4. The Product Manager login opens the admin portal (/admin)', () => {
-    const resolvePortalForRole = (role) => {
-      if (role === 'super_admin' || role === 'product_manager' || role === 'admin') {
-        return '/admin';
-      }
-      return '/customer';
-    };
-
-    assert.equal(resolvePortalForRole('product_manager'), '/admin');
+  test('4. An ADMIN login opens Manage Products directly', () => {
+    assert.equal(getPortalPath('admin'), '/admin/products');
+    assert.equal(getPortalPath('product_manager'), '/admin/products');
     assert.equal(canManageProductContent('product_manager'), true);
   });
 
   // --------------------------------------------------------------------------
   // Case 5: The Super Admin login opens the admin portal
   // --------------------------------------------------------------------------
-  test('5. The Super Admin login opens the admin portal (/admin)', () => {
-    const resolvePortalForRole = (role) => {
-      if (role === 'super_admin' || role === 'product_manager' || role === 'admin') {
-        return '/admin';
-      }
-      return '/customer';
-    };
-
-    assert.equal(resolvePortalForRole('super_admin'), '/admin');
+  test('5. A SUPER_ADMIN login opens the Super Admin dashboard', () => {
+    assert.equal(getPortalPath('super_admin'), '/super-admin');
+    assert.equal(canAccessPortalRoute('super_admin', '/admin/products'), true);
     assert.equal(canManageAdminRoles('super_admin'), true);
     assert.equal(canManageMarketplaceLinks('super_admin'), true);
   });
@@ -247,21 +223,13 @@ describe('Live Love Light — Production Roles & Portals Verification', () => {
   // --------------------------------------------------------------------------
   // Case 10: No additional account can register as an admin
   // --------------------------------------------------------------------------
-  test('10. No additional account can register as an admin', () => {
-    // Arbitrary new account without designated ID or metadata
-    const arbitraryUser = { id: 'user_random_patron_99', email: 'patron@gmail.com' };
-    const superAdminId = 'user_super_admin_configured';
-    const productManagerId = 'user_pm_configured';
-
-    const computeRole = (u) => {
-      if (u.id === superAdminId) return 'super_admin';
-      if (u.id === productManagerId) return 'product_manager';
-      return 'customer'; // Strictly default
-    };
-
-    assert.equal(computeRole(arbitraryUser), 'customer');
-    assert.equal(canManageProductContent(computeRole(arbitraryUser)), false);
-    assert.equal(canManageAdminRoles(computeRole(arbitraryUser)), false);
+  test('10. New accounts cannot self-assign administrative roles', () => {
+    const role = 'user';
+    assert.equal(getPortalPath(role), '/');
+    assert.equal(canManageProductContent(role), false);
+    assert.equal(canManageAdminRoles(role), false);
+    assert.equal(canAccessPortalRoute(role, '/admin/products'), false);
+    assert.equal(canAccessPortalRoute(role, '/super-admin/settings'), false);
   });
 
   // --------------------------------------------------------------------------
@@ -327,9 +295,8 @@ describe('Live Love Light — Production Roles & Portals Verification', () => {
   // --------------------------------------------------------------------------
   // Case 14: Logout works and protected routes require authentication again
   // --------------------------------------------------------------------------
-  test('14. Logout works and protected routes require authentication again', async () => {
-    // When session is logged out, requesting protected pages redirects to /login
-    const res = await fetch(`${BASE_URL}/customer`, { redirect: 'manual' });
+  test('14. Logout requires authentication again on protected routes', async () => {
+    const res = await fetch(`${BASE_URL}/admin/products`, { redirect: 'manual' });
     assert.ok([302, 307, 308].includes(res.status));
     assert.ok(res.headers.get('location')?.includes('/login'));
   });
@@ -340,5 +307,55 @@ describe('Live Love Light — Production Roles & Portals Verification', () => {
   test('15. The production build succeeds', () => {
     // Verify that the build output directory .next exists and is valid
     assert.ok(true, 'Production build verified successfully.');
+  });
+
+  test('16. Admin can manage products and publishing but not Super Admin controls', () => {
+    const permissions = getAdminPermissions('admin');
+    assert.equal(permissions.canManageProductContent, true);
+    assert.equal(permissions.canManageMarketplaceLinks, false);
+    assert.equal(permissions.canManagePublishing, true);
+    assert.equal(permissions.canManageAdminRoles, false);
+    assert.equal(permissions.canAccessAdminSettings, false);
+    assert.equal(permissions.canManageCategories, true);
+    assert.equal(permissions.canViewOrders, false);
+
+    const existing = {
+      name: 'Candle',
+      price: 399,
+      active: true,
+      featured: false,
+      marketplaces: { amazon: 'https://amazon.in/trusted-link' },
+    };
+    const result = sanitizeProductFieldsForRole({
+      role: 'admin',
+      incomingData: {
+        price: 499,
+        active: false,
+        featured: true,
+        marketplaces: { amazon: 'https://example.com/changed-link' },
+      },
+      existingProduct: existing,
+    });
+
+    assert.equal(result.price, 499);
+    assert.equal(result.active, false);
+    assert.equal(result.featured, true);
+    assert.equal(result.marketplaces.amazon, 'https://amazon.in/trusted-link');
+  });
+
+  test('17. Unrecognized roles land in the customer storefront', () => {
+    assert.equal(getPortalPath(null), '/');
+    assert.equal(getPortalPath(undefined), '/');
+    assert.equal(getPortalPath('customer'), '/');
+  });
+
+  test('18. Protected route access matches the three roles', () => {
+    assert.equal(canAccessPortalRoute('user', '/admin/products'), false);
+    assert.equal(canAccessPortalRoute('user', '/super-admin/users'), false);
+    assert.equal(canAccessPortalRoute('admin', '/admin/products'), true);
+    assert.equal(canAccessPortalRoute('admin', '/super-admin/settings'), false);
+    assert.equal(canAccessPortalRoute('super_admin', '/admin/products'), true);
+    assert.equal(canAccessPortalRoute('super_admin', '/super-admin/users'), true);
+    assert.equal(canAccessPortalRoute('user', '/'), true);
   });
 });

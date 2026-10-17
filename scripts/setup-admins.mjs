@@ -1,14 +1,14 @@
 /**
- * Live Love Light — Two-Level Admin Role Setup Tool
+ * Live Love Light — Admin Role Setup Tool
  *
  * Configures the two designated administrative accounts:
  * - ADMIN 1: SUPER_ADMIN
- * - ADMIN 2: PRODUCT_MANAGER
+ * - ADMIN 2: ADMIN
  *
  * Usage:
- *   node scripts/setup-admins.mjs --super-admin <CLERK_USER_ID_OR_EMAIL> --product-manager <CLERK_USER_ID_OR_EMAIL>
+ *   node scripts/setup-admins.mjs --super-admin <VERIFIED_CLERK_USER_ID> --admin <CLERK_USER_ID_OR_EMAIL>
  *   or:
- *   node scripts/setup-admins.mjs <SUPER_ADMIN_ID_OR_EMAIL> <PRODUCT_MANAGER_ID_OR_EMAIL>
+ *   node scripts/setup-admins.mjs --super-admin <VERIFIED_CLERK_USER_ID> [--admin <CLERK_USER_ID_OR_EMAIL>]
  *   or run without arguments to inspect registered Clerk accounts and view instructions:
  *   node scripts/setup-admins.mjs
  */
@@ -105,23 +105,23 @@ async function run() {
 
   // Parse arguments
   let superAdminInput = null;
-  let productManagerInput = null;
+  let adminInput = null;
 
   const args = process.argv.slice(2);
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--super-admin' && args[i + 1]) {
       superAdminInput = args[++i];
-    } else if (args[i] === '--product-manager' && args[i + 1]) {
-      productManagerInput = args[++i];
+    } else if ((args[i] === '--admin' || args[i] === '--product-manager') && args[i + 1]) {
+      adminInput = args[++i];
     } else if (!superAdminInput) {
       superAdminInput = args[i];
-    } else if (!productManagerInput) {
-      productManagerInput = args[i];
+    } else if (!adminInput) {
+      adminInput = args[i];
     }
   }
 
   // If no args provided, display existing users and instructions
-  if (!superAdminInput && !productManagerInput) {
+  if (!superAdminInput && !adminInput) {
     console.log('Fetching registered Clerk accounts in your application...\n');
     let users = [];
     try {
@@ -132,15 +132,15 @@ async function run() {
 
     if (!users || users.length === 0) {
       console.log('\x1b[33mNo accounts found in your Clerk application yet.\x1b[0m');
-      console.log('To set up the two admin roles:');
+      console.log('To set up the Super Admin and Admin roles:');
       console.log('1. Open your website at http://localhost:3000/login');
       console.log('2. Sign up or sign in with Account 1 (Super Admin)');
-      console.log('3. Sign up or sign in with Account 2 (Product Manager)');
+      console.log('3. Sign up or sign in with Account 2 (Admin)');
       console.log('4. Then rerun:');
-      console.log('   node scripts/setup-admins.mjs --super-admin <Account1_Email_or_ID> --product-manager <Account2_Email_or_ID>');
+      console.log('   node scripts/setup-admins.mjs --super-admin <Verified_Clerk_User_ID> --admin <Account2_Email_or_ID>');
       console.log('\nAlternatively, you can manually add the two Clerk user IDs to .env.local:');
       console.log('   SUPER_ADMIN_CLERK_ID=user_...');
-      console.log('   PRODUCT_MANAGER_CLERK_ID=user_...\n');
+      console.log('   ADMIN_CLERK_ID=user_...\n');
       return;
     }
 
@@ -148,19 +148,23 @@ async function run() {
     console.log('---------------------------------------------------------------');
     for (const u of users) {
       const email = u.email_addresses?.[0]?.email_address || 'No email';
-      const role = u.public_metadata?.role || 'customer (default)';
+      const role = u.public_metadata?.role || 'user (default)';
       console.log(`- ID: ${u.id}`);
       console.log(`  Email: ${email}`);
       console.log(`  Role:  ${role}\n`);
     }
     console.log('---------------------------------------------------------------');
     console.log('To assign the two admin accounts, run:');
-    console.log('  node scripts/setup-admins.mjs --super-admin <USER_ID_1> --product-manager <USER_ID_2>\n');
+    console.log('  node scripts/setup-admins.mjs --super-admin <Verified_Clerk_User_ID> --admin <USER_ID_2>\n');
     return;
   }
 
   // Process Super Admin
   if (superAdminInput) {
+    if (!/^user_[A-Za-z0-9]+$/.test(superAdminInput)) {
+      console.error('\x1b[31m[Error] First Super Admin setup requires the exact Clerk user ID (user_...).\x1b[0m');
+      process.exit(1);
+    }
     console.log(`Configuring Super Admin: "${superAdminInput}"...`);
     const saUser = await findUser(superAdminInput);
     if (!saUser) {
@@ -189,42 +193,40 @@ async function run() {
     }).catch(() => {});
 
     updateEnvLocalVar('SUPER_ADMIN_CLERK_ID', saUser.id);
-    updateEnvLocalVar('NEXT_PUBLIC_SUPER_ADMIN_CLERK_ID', saUser.id);
     console.log(`\x1b[32m✔ Super Admin configured: ${saEmail} (ID: ${saUser.id}) — Display Name: Live Love Light Owner\x1b[0m`);
   }
 
-  // Process Product Manager
-  if (productManagerInput) {
-    console.log(`Configuring Product Manager: "${productManagerInput}"...`);
-    const pmUser = await findUser(productManagerInput);
-    if (!pmUser) {
-      console.error(`\x1b[31m[Error] User not found in Clerk: "${productManagerInput}"\x1b[0m`);
+  // Process restricted Admin
+  if (adminInput) {
+    console.log(`Configuring Admin: "${adminInput}"...`);
+    const adminUser = await findUser(adminInput);
+    if (!adminUser) {
+      console.error(`\x1b[31m[Error] User not found in Clerk: "${adminInput}"\x1b[0m`);
       process.exit(1);
     }
 
-    const pmEmail = pmUser.email_addresses?.[0]?.email_address || pmUser.id;
-    await clerkFetch(`/users/${pmUser.id}/metadata`, {
+    const adminEmail = adminUser.email_addresses?.[0]?.email_address || adminUser.id;
+    await clerkFetch(`/users/${adminUser.id}/metadata`, {
       method: 'PATCH',
       body: JSON.stringify({
         public_metadata: {
-          ...(pmUser.public_metadata || {}),
-          role: 'product_manager',
-          displayName: 'Live Love Light Manager',
+          ...(adminUser.public_metadata || {}),
+          role: 'admin',
+          displayName: 'Live Love Light Admin',
         },
       }),
     });
 
-    await clerkFetch(`/users/${pmUser.id}`, {
+    await clerkFetch(`/users/${adminUser.id}`, {
       method: 'PATCH',
       body: JSON.stringify({
         first_name: 'Live Love Light',
-        last_name: 'Manager',
+        last_name: 'Admin',
       }),
     }).catch(() => {});
 
-    updateEnvLocalVar('PRODUCT_MANAGER_CLERK_ID', pmUser.id);
-    updateEnvLocalVar('NEXT_PUBLIC_PRODUCT_MANAGER_CLERK_ID', pmUser.id);
-    console.log(`\x1b[32m✔ Product Manager configured: ${pmEmail} (ID: ${pmUser.id}) — Display Name: Live Love Light Manager\x1b[0m`);
+    updateEnvLocalVar('ADMIN_CLERK_ID', adminUser.id);
+    console.log(`\x1b[32m✔ Admin configured: ${adminEmail} (ID: ${adminUser.id}) — Display Name: Live Love Light Admin\x1b[0m`);
   }
 
   console.log('\n===============================================================');

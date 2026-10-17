@@ -56,27 +56,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const primaryPhone = clerkUser.primaryPhoneNumber?.phoneNumber;
 
     const rawRole = (clerkUser.publicMetadata as { role?: string })?.role;
-    let computedRole: UserRole = 'customer';
+    let computedRole: UserRole = 'user';
 
-    const superAdminId = process.env.NEXT_PUBLIC_SUPER_ADMIN_CLERK_ID?.trim();
-    const productManagerId = process.env.NEXT_PUBLIC_PRODUCT_MANAGER_CLERK_ID?.trim();
-
-    if (superAdminId && clerkUser.id === superAdminId) {
+    if (rawRole === 'super_admin') {
       computedRole = 'super_admin';
-    } else if (productManagerId && clerkUser.id === productManagerId) {
-      computedRole = 'product_manager';
-    } else if (rawRole === 'super_admin' || rawRole === 'admin') {
-      computedRole = 'super_admin';
-    } else if (rawRole === 'product_manager') {
-      computedRole = 'product_manager';
+    } else if (rawRole === 'admin' || rawRole === 'product_manager') {
+      computedRole = 'admin';
     }
 
     const metadataDisplayName = (clerkUser.publicMetadata as { displayName?: string })?.displayName;
     const designatedDisplayName =
       computedRole === 'super_admin'
         ? 'Live Love Light Owner'
-        : computedRole === 'product_manager'
-        ? 'Live Love Light Manager'
+        : computedRole === 'admin'
+        ? 'Live Love Light Admin'
         : undefined;
 
     const displayName =
@@ -100,32 +93,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const loading = isClerkConfigured ? !clerkLoaded : false;
-  const isSuperAdmin = user?.role === 'super_admin' || user?.role === 'admin';
+  const isSuperAdmin = user?.role === 'super_admin';
   const isProductManager = user?.role === 'product_manager';
-  const isAdmin = isSuperAdmin || isProductManager;
+  const isAdmin = isSuperAdmin || user?.role === 'admin' || isProductManager;
 
-  // Sync Clerk authenticated user into Supabase profiles table
   useEffect(() => {
     if (!clerkSignedIn || !clerkUser || !user) return;
-
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return;
 
-    supabase
-      .from('profiles')
-      .upsert({
-        id: clerkUser.id,
-        email: user.email || null,
-        phone_number: user.phoneNumber || null,
-        display_name: user.displayName || null,
-        role: user.role,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'id' })
-      .then(({ error }) => {
-        if (error) {
-          console.warn('Supabase profile sync note:', error.message);
-        }
-      });
+    supabase.from('profiles').upsert({
+      id: clerkUser.id,
+      email: user.email || null,
+      phone_number: user.phoneNumber || null,
+      display_name: user.displayName || null,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'id' }).then(({ error }) => {
+      if (error) console.warn('Supabase profile sync note:', error.message);
+    });
   }, [clerkSignedIn, clerkUser, user]);
 
   const openSignIn = () => {

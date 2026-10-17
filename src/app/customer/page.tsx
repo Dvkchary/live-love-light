@@ -26,19 +26,12 @@ const defaultFilters: FilterOptions = {
 };
 
 export default function CustomerPortalPage() {
-  const { user, loading: authLoading, logout } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<FilterOptions>(defaultFilters);
-
-  // Protected route: Redirect unauthenticated visitors to /login
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.replace('/login');
-    }
-  }, [authLoading, user, router]);
 
   useEffect(() => {
     async function loadData() {
@@ -149,17 +142,6 @@ export default function CustomerPortalPage() {
     'Gift Collections': '/images/logo.jpeg',
   };
 
-  if (authLoading || (!user && typeof window !== 'undefined')) {
-    return (
-      <div className="min-h-screen bg-[#FCFBF7] flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-2 border-[#C59B27] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs uppercase tracking-widest text-[#786C63]">Entering Customer Portal...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex flex-col bg-[#FCFBF7]">
       <Navbar
@@ -168,7 +150,7 @@ export default function CustomerPortalPage() {
       />
 
       {/* Customer Portal Welcome Banner */}
-      <div className="bg-[#F6F1EC] border-b border-[#EAE3D9] py-3 px-4 sm:px-6 lg:px-8">
+      {user && <div className="bg-[#F6F1EC] border-b border-[#EAE3D9] py-3 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -194,7 +176,7 @@ export default function CustomerPortalPage() {
             </button>
           </div>
         </div>
-      </div>
+      </div>}
 
       <main className="flex-1">
         {/* Hero Section */}

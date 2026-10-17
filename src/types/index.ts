@@ -33,6 +33,7 @@ export interface Product {
   featured: boolean;
   active: boolean;
   inStock: boolean;
+  stockQuantity?: number;
   burnTimeHours?: number;
   waxType?: string;
   weightGrams?: number;
@@ -41,8 +42,8 @@ export interface Product {
   updatedAt: string;
 }
 
-export type AdminRole = 'product_manager' | 'super_admin';
-export type UserRole = 'customer' | 'product_manager' | 'super_admin' | 'admin';
+export type AdminRole = 'admin' | 'product_manager' | 'super_admin';
+export type UserRole = 'user' | 'customer' | 'product_manager' | 'super_admin' | 'admin';
 
 export interface AdminPermissions {
   canManageProductContent: boolean;
@@ -50,6 +51,8 @@ export interface AdminPermissions {
   canManagePublishing: boolean;
   canManageAdminRoles: boolean;
   canAccessAdminSettings: boolean;
+  canManageCategories: boolean;
+  canViewOrders: boolean;
 }
 
 export interface AdminUserSummary {

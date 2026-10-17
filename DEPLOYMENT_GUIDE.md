@@ -129,9 +129,10 @@ vercel --prod
 2. In the Vercel dashboard, click **Add New Project** and import the repository.
 3. In the **Environment Variables** section, add:
    * `NEXT_PUBLIC_SITE_URL` (e.g., `https://livelovelight.website`)
-   * `ADMIN_SECRET_KEY` (Server-side admin passphrase)
    * `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (Clerk publishable key)
    * `CLERK_SECRET_KEY` (Clerk secret key)
+   * `SUPER_ADMIN_CLERK_ID` (optional server-only designated Super Admin Clerk user ID)
+   * `ADMIN_CLERK_ID` (optional server-only designated Admin Clerk user ID; legacy `PRODUCT_MANAGER_CLERK_ID` remains supported)
    * `NEXT_PUBLIC_SUPABASE_URL` (Supabase project URL)
    * `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (Supabase publishable key)
    * `SUPABASE_SERVICE_ROLE_KEY` (Supabase secret service-role key)
@@ -141,16 +142,25 @@ vercel --prod
 
 ## 6. External Credentials Checklist
 
+### First Super Admin Setup
+1. Apply `supabase/migrations/20261017000100_three_role_authorization.sql` to the existing Supabase project after the existing schema/role migrations. Keep RLS enabled.
+2. Sign up or sign in to Clerk with the account that will own the application.
+3. In Clerk Dashboard, copy that account's exact Clerk user ID (`user_...`).
+4. Set `CLERK_SECRET_KEY` in the trusted local environment, then run:
+   `node scripts/setup-admins.mjs --super-admin user_...`
+5. The script verifies the ID through Clerk's Backend API and writes the role to server-controlled Clerk metadata. It also records `SUPER_ADMIN_CLERK_ID` locally as a recovery guard.
+6. Add `SUPER_ADMIN_CLERK_ID` to Vercel Production if you want the designated-ID recovery path, then redeploy. Never put Clerk secret keys in `NEXT_PUBLIC_` variables.
+
 | Feature | Provider / Source | Required Configuration | Current Fallback Status |
 | :--- | :--- | :--- | :--- |
-| **Authentication** | Clerk Authentication | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` | In-app modal with OTP/Demo fallback |
+| **Authentication** | Clerk Authentication | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` | Server-controlled Clerk metadata roles |
 | **Database & Orders** | Supabase PostgreSQL | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Hydrates instantly from verified local catalogue fixtures |
 | **Catalogue Cloud DB** | Supabase (`public.products`) | Supabase migration script applied | Local fallback catalogue |
 | **Product Image Hosting** | Local Brand Assets / Supabase | `/images/` directory in public | Static brand assets |
 | **Amazon Product Links** | Amazon Seller Central | Amazon ASIN / Product URLs | Configurable per candle in `/admin` |
 | **Flipkart Product Links**| Flipkart Seller Hub | Flipkart FSN / Product URLs | Configurable per candle in `/admin` |
 | **Meesho Product Links** | Meesho Supplier Panel | Meesho Product URLs | Configurable per candle in `/admin` |
-| **Admin Authorization** | Server API / Clerk | `ADMIN_SECRET_KEY` (Server-side only) or Clerk Admin Role | Secure server-side validation |
+| **Admin Authorization** | Clerk + Supabase | Clerk server-controlled metadata and server-side checks | Admin publishing is allowed; links, orders, settings, and roles are Super Admin-only |
 
 ---
 
@@ -177,6 +187,5 @@ Run the following test scenarios to verify functionality:
    - Verify that button is hidden if that marketplace URL is empty.
 
 5. **Admin Dashboard:**
-   - Visit `/admin` and unlock with `livelovelight2026`.
-   - Add or edit a candle with custom price and marketplace URLs.
-   - Click **Marketplace Clicks** tab to inspect real-time click analytics.
+   - Sign in with an account assigned the Admin role to add and edit product details and prices.
+   - Sign in with a Super Admin account to manage marketplace links, publishing, analytics, and administrator roles.

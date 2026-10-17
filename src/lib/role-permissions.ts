@@ -3,7 +3,8 @@
  * Live Love Light — Two-Level Admin Role System
  *
  * Roles:
- * - product_manager: Content & catalog management, strictly restricted from marketplaces & roles.
+ * - admin: Content & catalog management, strictly restricted from marketplaces & roles.
+ * - product_manager: Legacy alias for the restricted Admin role.
  * - super_admin: Full access to all product fields, marketplace links, publishing, and role assignment.
  */
 
@@ -13,23 +14,27 @@ import type { UserRole, AdminRole, AdminPermissions, Product } from '../types/in
  * Returns granular boolean permission flags for any given role.
  */
 export function getAdminPermissions(role: UserRole): AdminPermissions {
-  if (role === 'super_admin' || role === 'admin') {
+  if (role === 'super_admin') {
     return {
       canManageProductContent: true,
       canManageMarketplaceLinks: true,
       canManagePublishing: true,
       canManageAdminRoles: true,
       canAccessAdminSettings: true,
+      canManageCategories: true,
+      canViewOrders: true,
     };
   }
 
-  if (role === 'product_manager') {
+  if (role === 'admin' || role === 'product_manager') {
     return {
       canManageProductContent: true,
       canManageMarketplaceLinks: false, // Strictly restricted
-      canManagePublishing: false,        // Strictly restricted
+      canManagePublishing: true,
       canManageAdminRoles: false,        // Strictly restricted
       canAccessAdminSettings: false,     // Strictly restricted
+      canManageCategories: true,
+      canViewOrders: false,
     };
   }
 
@@ -40,6 +45,8 @@ export function getAdminPermissions(role: UserRole): AdminPermissions {
     canManagePublishing: false,
     canManageAdminRoles: false,
     canAccessAdminSettings: false,
+    canManageCategories: false,
+    canViewOrders: false,
   };
 }
 
@@ -48,19 +55,19 @@ export function canManageProductContent(role: UserRole): boolean {
 }
 
 export function canManageMarketplaceLinks(role: UserRole): boolean {
-  return role === 'super_admin' || role === 'admin';
+  return role === 'super_admin';
 }
 
 export function canManagePublishing(role: UserRole): boolean {
-  return role === 'super_admin' || role === 'admin';
+  return role === 'super_admin';
 }
 
 export function canManageAdminRoles(role: UserRole): boolean {
-  return role === 'super_admin' || role === 'admin';
+  return role === 'super_admin';
 }
 
 export function canAccessAdminSettings(role: UserRole): boolean {
-  return role === 'super_admin' || role === 'admin';
+  return role === 'super_admin';
 }
 
 export interface SanitizeOptions {
@@ -82,10 +89,9 @@ export type SanitizeResult = Record<string, unknown> & {
  * 1. Options signature: sanitizeProductFieldsForRole({ role, incomingData, existingProduct, isCreate })
  * 2. Positional signature: sanitizeProductFieldsForRole(body, existingProduct, role)
  *
- * Security Guarantee for PRODUCT_MANAGER:
- * - On create: Marketplace links are stripped.
- * - On update: Strictly retains existing database marketplace URLs.
- * - Publishing / active state cannot be toggled by Product Manager.
+ * Security Guarantee for ADMIN and legacy PRODUCT_MANAGER:
+ * - Marketplace links are strictly retained from existing database records.
+ * - Product publishing is allowed for Admin and Super Admin.
  */
 export function sanitizeProductFieldsForRole(
   inputOrOptions: Record<string, unknown> | SanitizeOptions,
@@ -115,7 +121,8 @@ export function sanitizeProductFieldsForRole(
     isCreate = !existingProduct;
   }
 
-  const isSuper = role === 'super_admin' || role === 'admin';
+  const isSuper = role === 'super_admin';
+  const canPublish = role === 'super_admin' || role === 'admin' || role === 'product_manager';
   let rejectedMarketplaceAttempt = false;
 
   const existingMarketplaces = (existingProduct?.marketplaces as Record<string, string>) || {
@@ -163,14 +170,18 @@ export function sanitizeProductFieldsForRole(
     finalMarketplaces = {};
   }
 
-  const active = isSuper
+  const active = canPublish
     ? (typeof input.active === 'boolean' ? input.active : (existingProduct?.active ?? true))
     : (existingProduct ? existingProduct.active : true);
+  const featured = canPublish
+    ? (typeof input.featured === 'boolean' ? input.featured : (existingProduct?.featured ?? false))
+    : (existingProduct ? existingProduct.featured : false);
 
   const sanitized: Record<string, unknown> = {
     ...input,
     marketplaces: finalMarketplaces,
     active,
+    featured,
   };
 
   if (!isSuper) {

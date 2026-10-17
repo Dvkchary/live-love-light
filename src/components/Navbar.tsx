@@ -22,7 +22,8 @@ interface NavbarProps {
 }
 
 export default function Navbar({ onSearchClick, searchQuery = '', onSearchChange }: NavbarProps) {
-  const { user, isAdmin, logout } = useAuth();
+  const { user, isAdmin, isSuperAdmin, logout } = useAuth();
+  const adminPortalHref = isSuperAdmin ? '/super-admin' : '/admin/products';
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -94,7 +95,7 @@ export default function Navbar({ onSearchClick, searchQuery = '', onSearchChange
               </Link>
               {isAdmin && (
                 <Link
-                  href="/admin"
+                  href={adminPortalHref}
                   className="flex items-center gap-1.5 text-xs uppercase tracking-wider font-semibold text-[#9A7513] bg-[#F4E8C1]/60 px-3 py-1 rounded-full hover:bg-[#F4E8C1] transition-all"
                 >
                   <ShieldCheck className="w-3.5 h-3.5" />
@@ -165,7 +166,7 @@ export default function Navbar({ onSearchClick, searchQuery = '', onSearchChange
                         </Link>
                         {isAdmin && (
                           <Link
-                            href="/admin"
+                            href={adminPortalHref}
                             onClick={() => setShowUserDropdown(false)}
                             className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-[#9A7513] hover:bg-[#F6F1EC] transition-colors"
                           >
@@ -259,7 +260,7 @@ export default function Navbar({ onSearchClick, searchQuery = '', onSearchChange
               </Link>
               {isAdmin && (
                 <Link
-                  href="/admin"
+                  href={adminPortalHref}
                   onClick={() => setMobileMenuOpen(false)}
                   className="px-3 py-2 rounded-md text-[#9A7513] font-semibold bg-[#F4E8C1]/60"
                 >
