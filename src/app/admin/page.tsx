@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useSyncExternalStore } from 'react';
+import React, { useState, useEffect, useSyncExternalStore, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Product, CandleCategory, MarketplaceClickEvent } from '@/types';
+import { Product, CandleCategory, MarketplaceClickEvent, UserRole, AdminUserSummary } from '@/types';
 import {
   getAllProducts,
   saveProduct,
@@ -31,7 +31,8 @@ import {
   RefreshCw,
   X,
   ShoppingBag,
-  Lock
+  Lock,
+  Users
 } from 'lucide-react';
 
 const subscribeToStorage = () => () => {};
@@ -41,10 +42,17 @@ const getSessionSnapshot = () => {
 const getSessionServerSnapshot = () => false;
 
 export default function AdminPage() {
-  const { isAdmin, loginWithDemoUser } = useAuth();
+  const { user, isAdmin, isSuperAdmin, isProductManager } = useAuth();
   const sessionUnlocked = useSyncExternalStore(subscribeToStorage, getSessionSnapshot, getSessionServerSnapshot);
   const [passcodeUnlocked, setPasscodeUnlocked] = useState(false);
   const isUnlocked = isAdmin || sessionUnlocked || passcodeUnlocked;
+
+  const [serverRole, setServerRole] = useState<UserRole | null>(null);
+  const effectiveRole: UserRole =
+    serverRole ||
+    (isSuperAdmin ? 'super_admin' : isProductManager ? 'product_manager' : (user?.role as UserRole) || 'customer');
+  const isSuperAdminRole = effectiveRole === 'super_admin' || effectiveRole === 'admin';
+  const isProductManagerRole = effectiveRole === 'product_manager';
 
   const [passcode, setPasscode] = useState('');
   const [verifying, setVerifying] = useState(false);
@@ -53,7 +61,21 @@ export default function AdminPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [clicks, setClicks] = useState<MarketplaceClickEvent[]>([]);
-  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'analytics'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'analytics' | 'roles'>(() => {
+    if (typeof window === 'undefined') return 'products';
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    if (tabParam === 'users' || tabParam === 'roles') return 'roles';
+    if (tabParam === 'marketplaces' || tabParam === 'analytics') return 'analytics';
+    if (tabParam === 'categories') return 'categories';
+    return 'products';
+  });
+
+  // Admin users state (Super Admin only)
+  const [adminUsers, setAdminUsers] = useState<AdminUserSummary[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [roleActionMessage, setRoleActionMessage] = useState<string | null>(null);
+  const [roleActionError, setRoleActionError] = useState<string | null>(null);
 
   // Edit / Add Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -126,6 +148,74 @@ export default function AdminPage() {
     };
   }, [isUnlocked]);
 
+  useEffect(() => {
+    fetch('/api/admin/session')
+      .then(res => res.json())
+      .then(data => {
+        if (data.authenticated && data.role) {
+          setServerRole(data.role);
+          setPasscodeUnlocked(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const loadAdminUsers = useCallback(async () => {
+    if (!isSuperAdminRole) return;
+    setUsersLoading(true);
+    try {
+      const res = await fetch('/api/admin/users');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.users)) {
+        setAdminUsers(data.users);
+      }
+    } catch (err) {
+      console.error('Failed to load admin users:', err);
+    } finally {
+      setUsersLoading(false);
+    }
+  }, [isSuperAdminRole]);
+
+  useEffect(() => {
+    if (activeTab !== 'roles' || !isSuperAdminRole) return;
+    let ignore = false;
+    fetch('/api/admin/users')
+      .then(res => res.json())
+      .then(data => {
+        if (!ignore && data.success && Array.isArray(data.users)) {
+          setAdminUsers(data.users);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load admin users:', err);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [activeTab, isSuperAdminRole]);
+
+  const handleUpdateRole = async (targetUserId: string, newRole: UserRole) => {
+    setRoleActionMessage(null);
+    setRoleActionError(null);
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUserId, newRole }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setRoleActionMessage(`Successfully updated user role to "${newRole}".`);
+        await loadAdminUsers();
+      } else {
+        setRoleActionError(data.error || 'Failed to update user role.');
+      }
+    } catch {
+      setRoleActionError('Network error updating user role.');
+    }
+  };
+
   const handleUnlockWithPasscode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!passcode.trim()) {
@@ -147,7 +237,6 @@ export default function AdminPage() {
           sessionStorage.setItem('lll_admin_unlocked', 'true');
         } catch {}
         setPasscodeUnlocked(true);
-        loginWithDemoUser('admin', 'admin@livelovelight.in');
         setAuthError(null);
       } else {
         setAuthError(data.error || 'Invalid administrator credentials.');
@@ -239,15 +328,15 @@ export default function AdminPage() {
       setFormError('Price must be greater than zero.');
       return;
     }
-    if (!validateUrl(formAmazonUrl)) {
+    if (formAmazonUrl && !validateUrl(formAmazonUrl)) {
       setFormError('Invalid Amazon URL. Must begin with https://');
       return;
     }
-    if (!validateUrl(formFlipkartUrl)) {
+    if (formFlipkartUrl && !validateUrl(formFlipkartUrl)) {
       setFormError('Invalid Flipkart URL. Must begin with https://');
       return;
     }
-    if (!validateUrl(formMeeshoUrl)) {
+    if (formMeeshoUrl && !validateUrl(formMeeshoUrl)) {
       setFormError('Invalid Meesho URL. Must begin with https://');
       return;
     }
@@ -289,18 +378,30 @@ export default function AdminPage() {
       updatedAt: new Date().toISOString()
     };
 
-    await saveProduct(productData);
-    setFormSuccess('Product saved successfully.');
-    await refreshData();
-    setTimeout(() => {
-      setIsModalOpen(false);
-    }, 800);
+    try {
+      const res = await saveProduct(productData);
+      setFormSuccess(res.notice || 'Product saved successfully.');
+      await refreshData();
+      setTimeout(() => {
+        setIsModalOpen(false);
+      }, 1000);
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : 'Failed to save product.');
+    }
   };
 
   const handleDeleteProduct = async (id: string, name: string) => {
+    if (!isSuperAdminRole) {
+      alert('Only Super Administrators have permission to delete candles.');
+      return;
+    }
     if (confirm(`Are you sure you want to delete "${name}" from the catalogue?`)) {
-      await deleteProduct(id);
-      await refreshData();
+      try {
+        await deleteProduct(id);
+        await refreshData();
+      } catch (err: unknown) {
+        alert(err instanceof Error ? err.message : 'Failed to delete product.');
+      }
     }
   };
 
@@ -319,56 +420,91 @@ export default function AdminPage() {
     }
   };
 
-  // If unauthorized, show administrator authentication gate
+  // If unauthorized, show administrator authentication gate or customer access-denied
   if (!isUnlocked) {
+    const isCustomer = user && user.role === 'customer';
+
     return (
       <div className="min-h-screen flex flex-col bg-[#FCFBF7]">
         <Navbar />
         <main className="flex-1 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl border border-[#EAE3D9] p-8 max-w-md w-full shadow-xl text-center space-y-6">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#9A7513] to-[#DFBE58] text-white flex items-center justify-center mx-auto shadow-md">
-              <ShieldCheck className="w-7 h-7" />
+            <div className={`w-14 h-14 rounded-full text-white flex items-center justify-center mx-auto shadow-md ${
+              isCustomer ? 'bg-amber-600' : 'bg-gradient-to-tr from-[#9A7513] to-[#DFBE58]'
+            }`}>
+              {isCustomer ? <AlertCircle className="w-7 h-7" /> : <ShieldCheck className="w-7 h-7" />}
             </div>
 
             <div>
               <h1 className="font-serif-luxury text-2xl font-bold text-[#231B15]">
-                Admin Catalogue Portal
+                {isCustomer ? 'Access Restricted' : 'Admin Portal'}
               </h1>
               <p className="text-xs text-[#786C63] mt-1">
-                Enter your Live Love Light administrative key or credentials to manage listings.
+                {isCustomer
+                  ? 'Your account does not have administrative privileges. Only designated administrators may access this portal.'
+                  : 'Please sign in with an authorized administrator account to access dashboard management.'}
               </p>
             </div>
 
-            {authError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{authError}</span>
+            {isCustomer ? (
+              <div className="space-y-3 pt-2">
+                <Link
+                  href="/customer"
+                  className="w-full py-2.5 px-4 rounded-lg bg-[#231B15] hover:bg-[#3D3027] text-white text-xs font-semibold tracking-wider uppercase transition-colors inline-block"
+                >
+                  Return to Customer Portal
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <Link
+                  href="/login"
+                  className="w-full py-2.5 px-4 rounded-lg bg-[#231B15] hover:bg-[#3D3027] text-white text-xs font-semibold tracking-wider uppercase transition-colors inline-block"
+                >
+                  Sign In with Clerk
+                </Link>
+
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-[#EAE3D9]"></div>
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-white px-2 text-[#786C63] text-[10px] tracking-wider">Or Emergency Admin Key</span>
+                  </div>
+                </div>
+
+                {authError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{authError}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleUnlockWithPasscode} className="space-y-3">
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-[#786C63] absolute left-3.5 top-3 pointer-events-none" />
+                    <input
+                      type="password"
+                      value={passcode}
+                      onChange={e => setPasscode(e.target.value)}
+                      placeholder="Enter server admin key..."
+                      className="w-full bg-[#F6F1EC] text-sm text-[#231B15] pl-10 pr-3 py-2 rounded-lg border border-[#EAE3D9] focus:outline-none focus:border-[#C59B27]"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={verifying}
+                    className="w-full py-2 px-4 rounded-lg bg-[#F6F1EC] hover:bg-[#EAE3D9] text-[#231B15] text-xs font-semibold tracking-wider uppercase transition-colors border border-[#EAE3D9] disabled:opacity-50"
+                  >
+                    {verifying ? 'Verifying...' : 'Unlock with Admin Key'}
+                  </button>
+                </form>
               </div>
             )}
 
-            <form onSubmit={handleUnlockWithPasscode} className="space-y-4">
-              <div className="relative">
-                <Lock className="w-4 h-4 text-[#786C63] absolute left-3.5 top-3 pointer-events-none" />
-                <input
-                  type="password"
-                  value={passcode}
-                  onChange={e => setPasscode(e.target.value)}
-                  placeholder="Enter administrator key..."
-                  className="w-full bg-[#F6F1EC] text-sm text-[#231B15] pl-10 pr-3 py-2.5 rounded-lg border border-[#EAE3D9] focus:outline-none focus:border-[#C59B27]"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={verifying}
-                className="w-full py-2.5 px-4 rounded-lg bg-[#231B15] hover:bg-[#3D3027] text-white text-xs font-semibold tracking-wider uppercase transition-colors disabled:opacity-50"
-              >
-                {verifying ? 'Verifying Server Authorization...' : 'Authenticate Session'}
-              </button>
-            </form>
-
             <div className="pt-2 border-t border-[#EAE3D9] text-[11px] text-[#786C63]">
-              <span>Protected portal. Credentials are authenticated securely via server-side authorization.</span>
+              <span>Protected portal. Role-based access is strictly enforced on the server.</span>
             </div>
           </div>
         </main>
@@ -389,9 +525,22 @@ export default function AdminPage() {
               <ShieldCheck className="w-4 h-4 text-[#C59B27]" />
               <span>LIVE LOVE LIGHT • CATALOGUE ADMINISTRATION</span>
             </div>
-            <h1 className="font-serif-luxury text-3xl sm:text-4xl font-bold text-[#231B15]">
-              Catalogue & Marketplace Control
-            </h1>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="font-serif-luxury text-3xl sm:text-4xl font-bold text-[#231B15]">
+                Catalogue & Marketplace Control
+              </h1>
+              {isSuperAdminRole ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-[#F4E8C1] text-[#9A7513] border border-[#C59B27]/40 shadow-xs">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  Super Admin
+                </span>
+              ) : isProductManagerRole ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-teal-50 text-teal-800 border border-teal-200 shadow-xs">
+                  <Lock className="w-3.5 h-3.5 text-teal-700" />
+                  Product Manager
+                </span>
+              ) : null}
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
@@ -415,11 +564,11 @@ export default function AdminPage() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-2 border-b border-[#EAE3D9] pb-px text-xs font-semibold">
+        <div className="flex items-center gap-2 border-b border-[#EAE3D9] pb-px text-xs font-semibold overflow-x-auto">
           <button
             type="button"
             onClick={() => setActiveTab('products')}
-            className={`pb-3 px-4 border-b-2 transition-all flex items-center gap-2 ${
+            className={`pb-3 px-4 border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'products'
                 ? 'border-[#231B15] text-[#231B15]'
                 : 'border-transparent text-[#786C63] hover:text-[#231B15]'
@@ -430,7 +579,7 @@ export default function AdminPage() {
           <button
             type="button"
             onClick={() => setActiveTab('categories')}
-            className={`pb-3 px-4 border-b-2 transition-all flex items-center gap-2 ${
+            className={`pb-3 px-4 border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'categories'
                 ? 'border-[#231B15] text-[#231B15]'
                 : 'border-transparent text-[#786C63] hover:text-[#231B15]'
@@ -441,7 +590,7 @@ export default function AdminPage() {
           <button
             type="button"
             onClick={() => setActiveTab('analytics')}
-            className={`pb-3 px-4 border-b-2 transition-all flex items-center gap-2 ${
+            className={`pb-3 px-4 border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'analytics'
                 ? 'border-[#231B15] text-[#231B15]'
                 : 'border-transparent text-[#786C63] hover:text-[#231B15]'
@@ -450,6 +599,20 @@ export default function AdminPage() {
             <BarChart3 className="w-3.5 h-3.5 text-[#C59B27]" />
             <span>Marketplace Clicks ({clicks.length})</span>
           </button>
+          {isSuperAdminRole && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('roles')}
+              className={`pb-3 px-4 border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
+                activeTab === 'roles'
+                  ? 'border-[#231B15] text-[#231B15]'
+                  : 'border-transparent text-[#786C63] hover:text-[#231B15]'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5 text-[#9A7513]" />
+              <span>Admin Users & Roles</span>
+            </button>
+          )}
         </div>
 
         {/* TAB 1: Products Table */}
@@ -548,14 +711,23 @@ export default function AdminPage() {
                           >
                             <Pencil className="w-4 h-4" />
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteProduct(p.id, p.name)}
-                            className="p-1.5 rounded-lg text-red-700 hover:bg-red-50"
-                            title="Delete Candle"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {isSuperAdminRole ? (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteProduct(p.id, p.name)}
+                              className="p-1.5 rounded-lg text-red-700 hover:bg-red-50"
+                              title="Delete Candle"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          ) : (
+                            <span
+                              className="p-1.5 text-gray-400 cursor-not-allowed opacity-40"
+                              title="Delete permission restricted to Super Administrators"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </span>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -714,6 +886,143 @@ export default function AdminPage() {
                     <tr>
                       <td colSpan={4} className="py-8 text-center text-[#786C63]">
                         No marketplace clicks recorded yet. Try clicking a marketplace button on a product details page!
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: Admin Users & Roles (Super Admin Only) */}
+        {activeTab === 'roles' && isSuperAdminRole && (
+          <div className="bg-white rounded-3xl border border-[#EAE3D9] p-6 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#EAE3D9]">
+              <div>
+                <h3 className="font-serif-luxury text-xl font-bold text-[#231B15] flex items-center gap-2">
+                  <Users className="w-5 h-5 text-[#9A7513]" />
+                  <span>Admin User Registry & Role Assignment</span>
+                </h3>
+                <p className="text-xs text-[#786C63] mt-1">
+                  Assign trusted Product Manager or Super Admin access. Customer accounts without assigned roles cannot access administrative tools.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={loadAdminUsers}
+                disabled={usersLoading}
+                className="px-3.5 py-2 rounded-xl border border-[#EAE3D9] bg-[#F6F1EC] text-xs font-semibold text-[#231B15] hover:bg-[#EBE3D7] transition-colors flex items-center gap-1.5 self-start sm:self-auto"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${usersLoading ? 'animate-spin' : ''}`} />
+                <span>Refresh Directory</span>
+              </button>
+            </div>
+
+            {roleActionMessage && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+                <span>{roleActionMessage}</span>
+              </div>
+            )}
+
+            {roleActionError && (
+              <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                <span>{roleActionError}</span>
+              </div>
+            )}
+
+            {/* Security Safeguard Notice */}
+            <div className="p-4 rounded-2xl bg-[#FCFBF7] border border-[#EAE3D9] flex items-start gap-3">
+              <ShieldCheck className="w-5 h-5 text-[#9A7513] shrink-0 mt-0.5" />
+              <div className="text-xs text-[#786C63] space-y-1">
+                <p className="font-semibold text-[#231B15]">Role-Based Access Control Rules:</p>
+                <p>• <strong>SUPER_ADMIN</strong>: Has unrestricted authority across products, pricing, marketplace links, publishing, and role assignment.</p>
+                <p>• <strong>PRODUCT_MANAGER</strong>: Can manage product details, descriptions, notes, fragrance, prices, and imagery. Marketplace destination links are read-only and preserved by server validation.</p>
+                <p>• <strong>Last Super Admin Protection</strong>: The system rejects any attempt to demote or revoke the last active Super Administrator.</p>
+              </div>
+            </div>
+
+            {/* Users Table */}
+            <div className="overflow-x-auto rounded-2xl border border-[#EAE3D9]">
+              <table className="w-full text-left text-xs text-[#231B15]">
+                <thead className="bg-[#F6F1EC] text-[#786C63] uppercase tracking-wider text-[10px] font-semibold border-b border-[#EAE3D9]">
+                  <tr>
+                    <th className="py-3 px-4">User</th>
+                    <th className="py-3 px-4">Current Role</th>
+                    <th className="py-3 px-4">Created / Registered</th>
+                    <th className="py-3 px-4 text-right">Role Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#EAE3D9] bg-white">
+                  {adminUsers.map(u => (
+                    <tr key={u.id} className="hover:bg-[#FCFBF7]/80 transition-colors">
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-[#231B15]">{u.displayName}</div>
+                        <div className="text-[11px] text-[#786C63]">{u.email || u.phoneNumber || u.id}</div>
+                      </td>
+                      <td className="py-3 px-4">
+                        {u.role === 'super_admin' || u.role === 'admin' ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#F4E8C1] text-[#9A7513] border border-[#C59B27]/30">
+                            <ShieldCheck className="w-3 h-3" />
+                            Super Admin
+                          </span>
+                        ) : u.role === 'product_manager' ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-teal-50 text-teal-800 border border-teal-200">
+                            <Lock className="w-3 h-3 text-teal-700" />
+                            Product Manager
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold text-[#786C63] bg-[#F6F1EC]">
+                            Customer
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-[#786C63] text-[11px]">
+                        {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Active Member'}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="inline-flex items-center gap-1.5 justify-end">
+                          {u.role !== 'product_manager' && (
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateRole(u.id, 'product_manager')}
+                              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 transition-colors"
+                            >
+                              Make Product Manager
+                            </button>
+                          )}
+                          {u.role !== 'super_admin' && (
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateRole(u.id, 'super_admin')}
+                              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-[#9A7513] bg-[#F4E8C1]/60 hover:bg-[#F4E8C1] border border-[#C59B27]/30 transition-colors"
+                            >
+                              Promote Super Admin
+                            </button>
+                          )}
+                          {u.role !== 'customer' && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (confirm(`Revoke administrative access from ${u.displayName || u.email}?`)) {
+                                  handleUpdateRole(u.id, 'customer');
+                                }
+                              }}
+                              className="px-2 py-1 rounded-lg text-[11px] font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors"
+                            >
+                              Revoke Access
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {adminUsers.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="py-8 text-center text-[#786C63]">
+                        {usersLoading ? 'Loading admin user directory...' : 'No external users registered yet. New users who sign in via Clerk can be assigned administrative roles here.'}
                       </td>
                     </tr>
                   )}
@@ -990,53 +1299,88 @@ export default function AdminPage() {
                   </p>
                 </div>
 
-                {/* Marketplace URLs (Validated) */}
+                {/* Marketplace URLs (Super Admin Only vs Product Manager Read-Only) */}
                 <div className="p-4 bg-white rounded-2xl border border-[#EAE3D9] space-y-3">
-                  <h4 className="font-bold text-sm text-[#231B15] flex items-center gap-1.5">
-                    <ShoppingBag className="w-4 h-4 text-[#C59B27]" />
-                    Marketplace Purchasing Links
-                  </h4>
-                  <p className="text-[11px] text-[#786C63]">
-                    Only platforms with valid configured URLs will display purchase buttons on the product page.
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-bold text-sm text-[#231B15] flex items-center gap-1.5">
+                      <ShoppingBag className="w-4 h-4 text-[#C59B27]" />
+                      Marketplace Purchasing Links
+                    </h4>
+                    {!isSuperAdminRole && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200">
+                        <Lock className="w-3 h-3 text-amber-600" />
+                        Super Admin Only
+                      </span>
+                    )}
+                  </div>
+                  {!isSuperAdminRole ? (
+                    <div className="p-3 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 leading-relaxed flex items-start gap-2">
+                      <Lock className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                      <div>
+                        <strong>Read-Only for Product Managers:</strong> Marketplace destination links (Amazon, Flipkart, Meesho) are restricted to Super Administrators. Existing destination URLs will be preserved upon saving.
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-[#786C63]">
+                      Only platforms with valid configured URLs will display purchase buttons on the product page.
+                    </p>
+                  )}
 
                   <div className="space-y-3 pt-1">
                     <div>
-                      <label className="block font-semibold text-[#231B15] mb-1">
-                        Amazon Product URL
+                      <label className="block font-semibold text-[#231B15] mb-1 flex items-center justify-between">
+                        <span>Amazon Product URL</span>
+                        {!isSuperAdminRole && <span className="text-[10px] text-[#786C63] font-normal">Protected</span>}
                       </label>
                       <input
                         type="url"
+                        disabled={!isSuperAdminRole}
                         value={formAmazonUrl}
                         onChange={e => setFormAmazonUrl(e.target.value)}
-                        placeholder="https://www.amazon.in/dp/..."
-                        className="w-full bg-[#FCFBF7] text-xs text-[#231B15] p-2.5 rounded-xl border border-[#EAE3D9]"
+                        placeholder={isSuperAdminRole ? "https://www.amazon.in/dp/..." : "(Restricted to Super Admin)"}
+                        className={`w-full text-xs p-2.5 rounded-xl border border-[#EAE3D9] ${
+                          isSuperAdminRole
+                            ? 'bg-[#FCFBF7] text-[#231B15] focus:outline-none focus:border-[#C59B27]'
+                            : 'bg-[#F6F1EC] text-[#786C63] cursor-not-allowed opacity-80'
+                        }`}
                       />
                     </div>
 
                     <div>
-                      <label className="block font-semibold text-[#231B15] mb-1">
-                        Flipkart Product URL
+                      <label className="block font-semibold text-[#231B15] mb-1 flex items-center justify-between">
+                        <span>Flipkart Product URL</span>
+                        {!isSuperAdminRole && <span className="text-[10px] text-[#786C63] font-normal">Protected</span>}
                       </label>
                       <input
                         type="url"
+                        disabled={!isSuperAdminRole}
                         value={formFlipkartUrl}
                         onChange={e => setFormFlipkartUrl(e.target.value)}
-                        placeholder="https://www.flipkart.com/..."
-                        className="w-full bg-[#FCFBF7] text-xs text-[#231B15] p-2.5 rounded-xl border border-[#EAE3D9]"
+                        placeholder={isSuperAdminRole ? "https://www.flipkart.com/..." : "(Restricted to Super Admin)"}
+                        className={`w-full text-xs p-2.5 rounded-xl border border-[#EAE3D9] ${
+                          isSuperAdminRole
+                            ? 'bg-[#FCFBF7] text-[#231B15] focus:outline-none focus:border-[#C59B27]'
+                            : 'bg-[#F6F1EC] text-[#786C63] cursor-not-allowed opacity-80'
+                        }`}
                       />
                     </div>
 
                     <div>
-                      <label className="block font-semibold text-[#231B15] mb-1">
-                        Meesho Product URL
+                      <label className="block font-semibold text-[#231B15] mb-1 flex items-center justify-between">
+                        <span>Meesho Product URL</span>
+                        {!isSuperAdminRole && <span className="text-[10px] text-[#786C63] font-normal">Protected</span>}
                       </label>
                       <input
                         type="url"
+                        disabled={!isSuperAdminRole}
                         value={formMeeshoUrl}
                         onChange={e => setFormMeeshoUrl(e.target.value)}
-                        placeholder="https://www.meesho.com/..."
-                        className="w-full bg-[#FCFBF7] text-xs text-[#231B15] p-2.5 rounded-xl border border-[#EAE3D9]"
+                        placeholder={isSuperAdminRole ? "https://www.meesho.com/..." : "(Restricted to Super Admin)"}
+                        className={`w-full text-xs p-2.5 rounded-xl border border-[#EAE3D9] ${
+                          isSuperAdminRole
+                            ? 'bg-[#FCFBF7] text-[#231B15] focus:outline-none focus:border-[#C59B27]'
+                            : 'bg-[#F6F1EC] text-[#786C63] cursor-not-allowed opacity-80'
+                        }`}
                       />
                     </div>
                   </div>
@@ -1064,14 +1408,17 @@ export default function AdminPage() {
                     <span className="font-semibold text-[#231B15]">In Stock</span>
                   </label>
 
-                  <label className="flex items-center gap-2 cursor-pointer">
+                  <label className={`flex items-center gap-2 ${isSuperAdminRole ? 'cursor-pointer' : 'cursor-not-allowed opacity-75'}`}>
                     <input
                       type="checkbox"
+                      disabled={!isSuperAdminRole}
                       checked={formActive}
                       onChange={e => setFormActive(e.target.checked)}
                       className="w-4 h-4 rounded text-[#C59B27]"
                     />
-                    <span className="font-semibold text-[#231B15]">Active in Catalogue</span>
+                    <span className="font-semibold text-[#231B15]">
+                      Active in Catalogue {!isSuperAdminRole && <span className="text-[10px] text-[#786C63] font-normal">(Super Admin Only)</span>}
+                    </span>
                   </label>
                 </div>
 

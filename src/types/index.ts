@@ -41,12 +41,33 @@ export interface Product {
   updatedAt: string;
 }
 
+export type AdminRole = 'product_manager' | 'super_admin';
+export type UserRole = 'customer' | 'product_manager' | 'super_admin' | 'admin';
+
+export interface AdminPermissions {
+  canManageProductContent: boolean;
+  canManageMarketplaceLinks: boolean;
+  canManagePublishing: boolean;
+  canManageAdminRoles: boolean;
+  canAccessAdminSettings: boolean;
+}
+
+export interface AdminUserSummary {
+  id: string;
+  email?: string;
+  phoneNumber?: string;
+  displayName?: string;
+  role: UserRole;
+  createdAt?: string;
+  lastSignInAt?: string;
+}
+
 export interface UserProfile {
   uid: string;
   email?: string;
   phoneNumber?: string;
   displayName?: string;
-  role: 'customer' | 'admin';
+  role: UserRole;
   savedProducts?: string[];
   createdAt: string;
 }

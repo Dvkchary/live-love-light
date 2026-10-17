@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Love Light — Figma Design System &amp; Interactive UI Prototype</title>
+  
+  <!-- Google Fonts: Cormorant Garamond & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      /* Figma UI Dark Chrome */
+      --figma-bg: #1e1e1e;
+      --figma-surface: #2c2c2c;
+      --figma-panel: #252525;
+      --figma-border: #383838;
+      --figma-text: #ffffff;
+      --figma-text-muted: #8e8e8e;
+      --figma-blue: #0d99ff;
+      --figma-blue-hover: #007be5;
+      --figma-canvas: #141414;
+      
+      /* Website Design System Tokens */
+      --color-ivory: #FCFBF7;
+      --color-cream: #F6F1EC;
+      --color-gold: #C59B27;
+      --color-gold-light: #DFBE58;
+      --color-gold-dark: #9A7513;
+      --color-gold-soft: #F4E8C1;
+      --color-espresso: #231B15;
+      --color-warm-gray: #786C63;
+      --color-border-warm: #EAE3D9;
+      --font-serif: 'Cormorant Garamond', Georgia, serif;
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--figma-canvas);
+      color: var(--figma-text);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ==================== 1. FIGMA TOP TOOLBAR ==================== */
+    header.figma-header {
+      height: 52px;
+      background: var(--figma-bg);
+      border-bottom: 1px solid var(--figma-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 50;
+      flex-shrink: 0;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .figma-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+      color: #fff;
+    }
+
+    .figma-logo-icon {
+      width: 24px;
+      height: 24px;
+    }
+
+    .project-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .project-title {
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .client-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(46, 125, 50, 0.2);
+      border: 1px solid rgba(76, 175, 80, 0.4);
+      color: #81c784;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+
+    /* Mode Switcher Tabs */
+    .mode-switcher {
+      display: flex;
+      align-items: center;
+      background: var(--figma-panel);
+      padding: 3px;
+      border-radius: 8px;
+      border: 1px solid var(--figma-border);
+      gap: 2px;
+    }
+
+    .mode-tab {
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--figma-text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .mode-tab:hover {
+      color: #fff;
+      background: rgba(255,255,255,0.05);
+    }
+
+    .mode-tab.active {
+      color: #fff;
+      background: var(--figma-surface);
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .zoom-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--figma-panel);
+      border: 1px solid var(--figma-border);
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 12px;
+      color: #ccc;
+    }
+
+    .zoom-btn {
+      background: none;
+      border: none;
+      color: #bbb;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 0 4px;
+    }
+
+    .zoom-btn:hover {
+      color: #fff;
+    }
+
+    .btn-client-export {
+      background: var(--figma-blue);
+      color: #fff;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s ease;
+    }
+
+    .btn-client-export:hover {
+      background: var(--figma-blue-hover);
+    }
+
+    /* ==================== 2. MAIN WORKSPACE LAYOUT ==================== */
+    .figma-workspace {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 52px);
+      overflow: hidden;
+    }
+
+    /* LEFT SIDEBAR: Layers & Screens Tree */
+    aside.figma-sidebar {
+      width: 260px;
+      background: var(--figma-bg);
+      border-right: 1px solid var(--figma-border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .sidebar-header {
+      padding: 12px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--figma-text-muted);
+      border-bottom: 1px solid var(--figma-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .screens-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 0;
+    }
+
+    .screen-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 16px;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: #d1d1d1;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .screen-item:hover {
+      background: rgba(255,255,255,0.04);
+      color: #fff;
+    }
+
+    .screen-item.active {
+      background: rgba(13, 153, 255, 0.15);
+      color: var(--figma-blue);
+      font-weight: 600;
+      border-left: 3px solid var(--figma-blue);
+    }
+
+    .screen-item-icon {
+      font-size: 15px;
+      opacity: 0.8;
+    }
+
+    .screen-item-badge {
+      margin-left: auto;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.08);
+      color: #aaa;
+    }
+
+    .sidebar-footer {
+      padding: 14px 16px;
+      border-top: 1px solid var(--figma-border);
+      background: var(--figma-panel);
+      font-size: 11px;
+      color: #999;
+      line-height: 1.5;
+    }
+
+    /* ==================== 3. CANVAS / VIEWPORT AREA ==================== */
+    main.figma-canvas-area {
+      flex: 1;
+      background: #191919;
+      background-image: radial-gradient(#292929 1px, transparent 1px);
+      background-size: 20px 20px;
+      overflow: auto;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px;
+      position: relative;
+    }
+
+    .artboard-container {
+      background: var(--color-ivory);
+      border-radius: 8px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+      border: 1px solid #333;
+      transition: transform 0.2s ease;
+      transform-origin: top center;
+      position: relative;
+    }
+
+    .artboard-tag {
+      position: absolute;
+      top: -26px;
+      left: 0;
+      font-size: 11px;
+      font-weight: 600;
+      color: #aaa;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .artboard-tag span {
+      color: var(--figma-blue);
+    }
+
+    /* Screen Frame Views */
+    .screen-view {
+      display: none;
+      width: 100%;
+    }
+
+    .screen-view.active {
+      display: block;
+    }
+
+    /* ==================== 4. RIGHT SIDEBAR: FIGMA INSPECT & SPECS ==================== */
+    aside.figma-inspect {
+      width: 300px;
+      background: var(--figma-bg);
+      border-left: 1px solid var(--figma-border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .inspect-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--figma-border);
+    }
+
+    .inspect-tab {
+      flex: 1;
+      text-align: center;
+      padding: 12px 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--figma-text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+
+    .inspect-tab.active {
+      color: #fff;
+      border-bottom-color: var(--figma-blue);
+    }
+
+    .inspect-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      font-size: 12px;
+    }
+
+    .spec-group {
+      margin-bottom: 20px;
+    }
+
+    .spec-group-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--figma-text-muted);
+      margin-bottom: 10px;
+    }
+
+    .spec-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 12px;
+    }
+
+    .spec-label {
+      color: #999;
+    }
+
+    .spec-val {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: #eee;
+      background: rgba(255,255,255,0.05);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .color-swatch-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .color-swatch-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px;
+      border-radius: 6px;
+      background: var(--figma-surface);
+      cursor: pointer;
+    }
+
+    .color-swatch-row:hover {
+      background: #333;
+    }
+
+    .swatch-box {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .swatch-info {
+      flex: 1;
+    }
+
+    .swatch-name {
+      font-weight: 600;
+      font-size: 11px;
+      color: #fff;
+    }
+
+    .swatch-hex {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: #aaa;
+    }
+
+    .btn-copy-figma {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      background: var(--figma-surface);
+      border: 1px solid var(--figma-border);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 10px;
+      transition: background 0.15s ease;
+    }
+
+    .btn-copy-figma:hover {
+      background: #333;
+      border-color: #555;
+    }
+
+    /* Modal dialog for exports */
+    .export-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .export-modal.active {
+      display: flex;
+    }
+
+    .modal-card {
+      background: var(--figma-bg);
+      border: 1px solid var(--figma-border);
+      border-radius: 12px;
+      width: 520px;
+      padding: 24px;
+      box-shadow: 0 24px 48px rgba(0,0,0,0.5);
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: #888;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .file-item-card {
+      background: var(--figma-surface);
+      border: 1px solid var(--figma-border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== FIGMA TOPBAR ==================== -->
+  <header class="figma-header">
+    <div class="header-left">
+      <!-- Figma Hexagon / Droplet Logo -->
+      <div class="figma-logo">
+        <svg class="figma-logo-icon" viewBox="0 0 38 57" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M19 28.5C19 23.2533 23.2533 19 28.5 19C33.7467 19 38 23.2533 38 28.5C38 33.7467 33.7467 38 28.5 38C23.2533 38 19 33.7467 19 28.5Z" fill="#1ABCFE"/>
+          <path d="M0 47.5C0 42.2533 4.25329 38 9.5 38H19V47.5C19 52.7467 14.7467 57 9.5 57C4.25329 57 0 52.7467 0 47.5Z" fill="#0ACF83"/>
+          <path d="M19 0V19H28.5C33.7467 19 38 14.7467 38 9.5C38 4.25329 33.7467 0 28.5 0H19Z" fill="#FF7262"/>
+          <path d="M0 9.5C0 14.7467 4.25329 19 9.5 19H19V0H9.5C4.25329 0 0 4.25329 0 9.5Z" fill="#F24E1E"/>
+          <path d="M0 28.5C0 33.7467 4.25329 38 9.5 38H19V19H9.5C4.25329 19 0 23.2533 0 28.5Z" fill="#A259FF"/>
+        </svg>
+        <span>Figma</span>
+      </div>
+
+      <div class="project-meta">
+        <span class="project-title">Live Love Light — Master UI Design &amp; Prototype</span>
+        <span class="client-status">● Client Review Ready</span>
+      </div>
+    </div>
+
+    <!-- Center Mode Switcher -->
+    <div class="mode-switcher">
+      <div class="mode-tab active" onclick="switchMode('canvas')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+        Artboard View
+      </div>
+      <div class="mode-tab" onclick="switchMode('mobile')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
+        Mobile Prototype
+      </div>
+      <div class="mode-tab" onclick="switchMode('design-system')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/></svg>
+        Design Tokens
+      </div>
+    </div>
+
+    <!-- Right Controls -->
+    <div class="header-right">
+      <div class="zoom-controls">
+        <button class="zoom-btn" onclick="adjustZoom(-0.1)">−</button>
+        <span id="zoom-val">100%</span>
+        <button class="zoom-btn" onclick="adjustZoom(0.1)">+</button>
+        <button class="zoom-btn" onclick="resetZoom()" style="margin-left:4px; font-size:11px;">Fit</button>
+      </div>
+
+      <button class="btn-client-export" onclick="openExportModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Client Handoff Assets
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN WORKSPACE ==================== -->
+  <div class="figma-workspace">
+
+    <!-- LEFT SIDEBAR: Artboard Navigator -->
+    <aside class="figma-sidebar">
+      <div class="sidebar-header">
+        <span>Artboards &amp; Pages</span>
+        <span style="font-size:10px; color:#666;">5 FRAMES</span>
+      </div>
+
+      <div class="screens-list">
+        <div class="screen-item active" onclick="selectScreen('homepage', this)">
+          <span class="screen-item-icon">🖥️</span>
+          <span>01. Home &amp; Storefront</span>
+          <span class="screen-item-badge">1440px</span>
+        </div>
+
+        <div class="screen-item" onclick="selectScreen('product-detail', this)">
+          <span class="screen-item-icon">🛍️</span>
+          <span>02. Product Studio Detail</span>
+          <span class="screen-item-badge">1440px</span>
+        </div>
+
+        <div class="screen-item" onclick="selectScreen('about-story', this)">
+          <span class="screen-item-icon">📜</span>
+          <span>03. Brand Story &amp; Craft</span>
+          <span class="screen-item-badge">1440px</span>
+        </div>
+
+        <div class="screen-item" onclick="selectScreen('mobile-screen', this)">
+          <span class="screen-item-icon">📱</span>
+          <span>04. Mobile App Experience</span>
+          <span class="screen-item-badge">390px</span>
+        </div>
+
+        <div class="screen-item" onclick="selectScreen('system-screen', this)">
+          <span class="screen-item-icon">📐</span>
+          <span>05. Master Design System</span>
+          <span class="screen-item-badge">UI Kit</span>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <strong style="color:#eee; display:block; margin-bottom:4px;">✨ 100% Vector Artboards</strong>
+        Drop any SVG from <code>figma/screens/</code> directly into Figma for fully editable layers and frames.
+      </div>
+    </aside>
+
+    <!-- CENTER CANVAS: Artboard Renderer -->
+    <main class="figma-canvas-area" id="canvas-area">
+      
+      <!-- SCREEN 1: Homepage Desktop -->
+      <div class="screen-view active" id="view-homepage">
+        <div class="artboard-container" id="artboard-home" style="width: 1440px;">
+          <div class="artboard-tag">
+            <span>#</span> 01_homepage_desktop_1440 <span style="color:#888;">• 1440 × 2360 px</span>
+          </div>
+          <!-- Embedded SVG directly -->
+          <object data="screens/01_homepage_desktop_1440.svg" type="image/svg+xml" width="1440" height="2360" style="display:block;"></object>
+        </div>
+      </div>
+
+      <!-- SCREEN 2: Product Detail Desktop -->
+      <div class="screen-view" id="view-product-detail">
+        <div class="artboard-container" id="artboard-product" style="width: 1440px;">
+          <div class="artboard-tag">
+            <span>#</span> 02_product_detail_desktop_1440 <span style="color:#888;">• 1440 × 2100 px</span>
+          </div>
+          <object data="screens/02_product_detail_desktop_1440.svg" type="image/svg+xml" width="1440" height="2100" style="display:block;"></object>
+        </div>
+      </div>
+
+      <!-- SCREEN 3: About Story Desktop -->
+      <div class="screen-view" id="view-about-story">
+        <div class="artboard-container" id="artboard-about" style="width: 1440px;">
+          <div class="artboard-tag">
+            <span>#</span> 03_about_story_desktop_1440 <span style="color:#888;">• 1440 × 2100 px</span>
+          </div>
+          <object data="screens/03_about_story_desktop_1440.svg" type="image/svg+xml" width="1440" height="2100" style="display:block;"></object>
+        </div>
+      </div>
+
+      <!-- SCREEN 4: Mobile Screen -->
+      <div class="screen-view" id="view-mobile-screen">
+        <div class="artboard-container" id="artboard-mobile" style="width: 390px;">
+          <div class="artboard-tag">
+            <span>#</span> 04_mobile_storefront_390 <span style="color:#888;">• 390 × 1850 px (iPhone 14/15/16 Pro)</span>
+          </div>
+          <object data="screens/04_mobile_storefront_390.svg" type="image/svg+xml" width="390" height="1850" style="display:block;"></object>
+        </div>
+      </div>
+
+      <!-- SCREEN 5: Master Design System -->
+      <div class="screen-view" id="view-system-screen">
+        <div class="artboard-container" id="artboard-system" style="width: 1440px;">
+          <div class="artboard-tag">
+            <span>#</span> 05_design_system_and_styleguide <span style="color:#888;">• 1440 × 2150 px</span>
+          </div>
+          <object data="screens/05_design_system_and_styleguide.svg" type="image/svg+xml" width="1440" height="2150" style="display:block;"></object>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- RIGHT SIDEBAR: Figma Properties & Specs Inspector -->
+    <aside class="figma-inspect">
+      <div class="inspect-tabs">
+        <div class="inspect-tab active" onclick="switchInspectTab('specs')">Inspect &amp; Tokens</div>
+        <div class="inspect-tab" onclick="switchInspectTab('export')">Handoff</div>
+      </div>
+
+      <div class="inspect-content" id="tab-specs">
+        <!-- Frame Overview -->
+        <div class="spec-group">
+          <div class="spec-group-title">Artboard Specs</div>
+          <div class="spec-row">
+            <span class="spec-label">Artboard Name</span>
+            <span class="spec-val" id="spec-name">01_homepage_desktop</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">Dimensions</span>
+            <span class="spec-val" id="spec-dims">1440 × 2360 px</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">Grid Layout</span>
+            <span class="spec-val">12 Cols • 80px M • 24px G</span>
+          </div>
+        </div>
+
+        <!-- Typography Specs -->
+        <div class="spec-group">
+          <div class="spec-group-title">Typography Hierarchy</div>
+          <div class="spec-row">
+            <span class="spec-label">Display Serif</span>
+            <span class="spec-val">Cormorant Garamond (700)</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-label">Body &amp; Controls</span>
+            <span class="spec-val">Plus Jakarta Sans (400-700)</span>
+          </div>
+        </div>
+
+        <!-- Color Tokens List -->
+        <div class="spec-group">
+          <div class="spec-group-title">Color Palette Tokens</div>
+          <div class="color-swatch-list">
+            <div class="color-swatch-row" onclick="copyToken('#FCFBF7')">
+              <div class="swatch-box" style="background:#FCFBF7;"></div>
+              <div class="swatch-info">
+                <div class="swatch-name">Ivory Background</div>
+                <div class="swatch-hex">#FCFBF7</div>
+              </div>
+            </div>
+
+            <div class="color-swatch-row" onclick="copyToken('#F6F1EC')">
+              <div class="swatch-box" style="background:#F6F1EC;"></div>
+              <div class="swatch-info">
+                <div class="swatch-name">Warm Cream Surface</div>
+                <div class="swatch-hex">#F6F1EC</div>
+              </div>
+            </div>
+
+            <div class="color-swatch-row" onclick="copyToken('#C59B27')">
+              <div class="swatch-box" style="background:#C59B27;"></div>
+              <div class="swatch-info">
+                <div class="swatch-name">Luxury Gold Accent</div>
+                <div class="swatch-hex">#C59B27</div>
+              </div>
+            </div>
+
+            <div class="color-swatch-row" onclick="copyToken('#231B15')">
+              <div class="swatch-box" style="background:#231B15;"></div>
+              <div class="swatch-info">
+                <div class="swatch-name">Deep Espresso Text</div>
+                <div class="swatch-hex">#231B15</div>
+              </div>
+            </div>
+
+            <div class="color-swatch-row" onclick="copyToken('#EAE3D9')">
+              <div class="swatch-box" style="background:#EAE3D9;"></div>
+              <div class="swatch-info">
+                <div class="swatch-name">Warm Border Tone</div>
+                <div class="swatch-hex">#EAE3D9</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Direct Actions -->
+        <button class="btn-copy-figma" onclick="openSvgDirectly()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Open Raw Vector SVG File
+        </button>
+      </div>
+
+      <div class="inspect-content" id="tab-export" style="display:none;">
+        <div class="spec-group">
+          <div class="spec-group-title">Figma Import Quick Steps</div>
+          <p style="color:#aaa; line-height:1.6; margin-bottom:12px;">
+            1. Open <strong style="color:#fff;">Figma</strong> (<a href="https://figma.com" target="_blank" style="color:var(--figma-blue);">figma.com</a>).<br>
+            2. Create a new design file.<br>
+            3. Open your project folder: <code>figma/screens/</code>.<br>
+            4. Drag any <code>.svg</code> file straight onto the canvas.
+          </p>
+          <div style="background:#1d1d1d; border-radius:6px; padding:10px; border:1px solid #333; color:#ccc; font-size:11px;">
+            ✨ Figma will instantly convert every element into vector groups, text nodes, and auto-layout frames!
+          </div>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- ==================== CLIENT HANDOFF MODAL ==================== -->
+  <div class="export-modal" id="exportModal">
+    <div class="modal-card">
+      <div class="modal-title">
+        <span>Client Presentation &amp; Figma Package</span>
+        <button class="modal-close" onclick="closeExportModal()">✕</button>
+      </div>
+      <p style="color:#aaa; font-size:13px; line-height:1.5; margin-bottom:16px;">
+        Here are the deliverables created in your <code>figma/</code> folder ready to present or send to your client:
+      </p>
+
+      <div class="file-item-card">
+        <div>
+          <strong style="color:#fff; font-size:13px; display:block;">01_homepage_desktop_1440.svg</strong>
+          <span style="color:#888; font-size:11px;">Full desktop storefront artboard with hero, filter bar &amp; 3-column cards</span>
+        </div>
+        <a href="screens/01_homepage_desktop_1440.svg" download class="btn-client-export" style="padding:4px 10px; font-size:11px;">Save SVG</a>
+      </div>
+
+      <div class="file-item-card">
+        <div>
+          <strong style="color:#fff; font-size:13px; display:block;">02_product_detail_desktop_1440.svg</strong>
+          <span style="color:#888; font-size:11px;">Product gallery, fragrance pyramid, and direct marketplace checkout</span>
+        </div>
+        <a href="screens/02_product_detail_desktop_1440.svg" download class="btn-client-export" style="padding:4px 10px; font-size:11px;">Save SVG</a>
+      </div>
+
+      <div class="file-item-card">
+        <div>
+          <strong style="color:#fff; font-size:13px; display:block;">03_about_story_desktop_1440.svg</strong>
+          <span style="color:#888; font-size:11px;">Craftsmanship philosophy and Botanical Soy vs Paraffin comparison</span>
+        </div>
+        <a href="screens/03_about_story_desktop_1440.svg" download class="btn-client-export" style="padding:4px 10px; font-size:11px;">Save SVG</a>
+      </div>
+
+      <div class="file-item-card">
+        <div>
+          <strong style="color:#fff; font-size:13px; display:block;">04_mobile_storefront_390.svg</strong>
+          <span style="color:#888; font-size:11px;">iPhone Pro responsive layout with mobile quick action bar</span>
+        </div>
+        <a href="screens/04_mobile_storefront_390.svg" download class="btn-client-export" style="padding:4px 10px; font-size:11px;">Save SVG</a>
+      </div>
+
+      <div class="file-item-card">
+        <div>
+          <strong style="color:#fff; font-size:13px; display:block;">05_design_system_and_styleguide.svg</strong>
+          <span style="color:#888; font-size:11px;">Master UI Kit: Typography scale, color swatches, button variants</span>
+        </div>
+        <a href="screens/05_design_system_and_styleguide.svg" download class="btn-client-export" style="padding:4px 10px; font-size:11px;">Save SVG</a>
+      </div>
+
+      <div class="file-item-card">
+        <div>
+          <strong style="color:#fff; font-size:13px; display:block;">tokens/design-tokens.json</strong>
+          <span style="color:#888; font-size:11px;">Tokens Studio for Figma / W3C JSON Design Token format</span>
+        </div>
+        <a href="tokens/design-tokens.json" download class="btn-client-export" style="padding:4px 10px; font-size:11px;">Save JSON</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive JavaScript Logic -->
+  <script>
+    let currentZoom = 0.85;
+    let activeScreenId = 'homepage';
+
+    const screenData = {
+      'homepage': { name: '01_homepage_desktop', dims: '1440 × 2360 px', file: 'screens/01_homepage_desktop_1440.svg' },
+      'product-detail': { name: '02_product_detail_desktop', dims: '1440 × 2100 px', file: 'screens/02_product_detail_desktop_1440.svg' },
+      'about-story': { name: '03_about_story_desktop', dims: '1440 × 2100 px', file: 'screens/03_about_story_desktop_1440.svg' },
+      'mobile-screen': { name: '04_mobile_storefront', dims: '390 × 1850 px', file: 'screens/04_mobile_storefront_390.svg' },
+      'system-screen': { name: '05_design_system', dims: '1440 × 2150 px', file: 'screens/05_design_system_and_styleguide.svg' },
+    };
+
+    function applyZoom() {
+      const artboards = document.querySelectorAll('.artboard-container');
+      artboards.forEach(ab => {
+        ab.style.transform = `scale(${currentZoom})`;
+      });
+      document.getElementById('zoom-val').textContent = `${Math.round(currentZoom * 100)}%`;
+    }
+
+    function adjustZoom(delta) {
+      currentZoom = Math.max(0.3, Math.min(2.0, currentZoom + delta));
+      applyZoom();
+    }
+
+    function resetZoom() {
+      // Auto-fit to canvas area
+      if (activeScreenId === 'mobile-screen') {
+        currentZoom = 1.0;
+      } else {
+        const width = window.innerWidth - 600;
+        currentZoom = Math.min(1.0, Math.max(0.4, width / 1440));
+      }
+      applyZoom();
+    }
+
+    function selectScreen(screenKey, element) {
+      activeScreenId = screenKey;
+
+      // Update sidebar active state
+      document.querySelectorAll('.screen-item').forEach(el => el.classList.remove('active'));
+      if (element) {
+        element.classList.add('active');
+      }
+
+      // Update canvas view
+      document.querySelectorAll('.screen-view').forEach(view => view.classList.remove('active'));
+      const activeView = document.getElementById(`view-${screenKey}`);
+      if (activeView) {
+        activeView.classList.add('active');
+      }
+
+      // Update inspect specs
+      const data = screenData[screenKey];
+      if (data) {
+        document.getElementById('spec-name').textContent = data.name;
+        document.getElementById('spec-dims').textContent = data.dims;
+      }
+
+      resetZoom();
+    }
+
+    function switchMode(mode) {
+      document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+
+      if (mode === 'canvas') {
+        const item = document.querySelector('.screen-item:nth-child(1)');
+        selectScreen('homepage', item);
+      } else if (mode === 'mobile') {
+        const item = document.querySelector('.screen-item:nth-child(4)');
+        selectScreen('mobile-screen', item);
+      } else if (mode === 'design-system') {
+        const item = document.querySelector('.screen-item:nth-child(5)');
+        selectScreen('system-screen', item);
+      }
+    }
+
+    function switchInspectTab(tabKey) {
+      document.querySelectorAll('.inspect-tab').forEach(t => t.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      if (tabKey === 'specs') {
+        document.getElementById('tab-specs').style.display = 'block';
+        document.getElementById('tab-export').style.display = 'none';
+      } else {
+        document.getElementById('tab-specs').style.display = 'none';
+        document.getElementById('tab-export').style.display = 'block';
+      }
+    }
+
+    function copyToken(hex) {
+      navigator.clipboard.writeText(hex);
+      alert(`Copied token ${hex} to clipboard!`);
+    }
+
+    function openSvgDirectly() {
+      const data = screenData[activeScreenId];
+      if (data) {
+        window.open(data.file, '_blank');
+      }
+    }
+
+    function openExportModal() {
+      document.getElementById('exportModal').classList.add('active');
+    }
+
+    function closeExportModal() {
+      document.getElementById('exportModal').classList.remove('active');
+    }
+
+    // Initialize fitting zoom on load
+    window.addEventListener('DOMContentLoaded', () => {
+      resetZoom();
+    });
+    window.addEventListener('resize', () => {
+      applyZoom();
+    });
+  </script>
+</body>
+</html>

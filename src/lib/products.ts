@@ -3,14 +3,14 @@ import { INITIAL_PRODUCTS, INITIAL_CATEGORIES } from '@/data/initialProducts';
 import { db, isFirebaseConfigured } from './firebase';
 import { isSupabaseConfigured, getSupabaseBrowserClient, getSupabaseServerClient } from './supabase';
 import {
-  collection,
-  getDocs,
   doc,
   setDoc,
-  deleteDoc,
   getDoc,
+  collection,
+  getDocs,
   query,
-  orderBy
+  orderBy,
+  QueryDocumentSnapshot
 } from 'firebase/firestore';
 
 const STORAGE_KEY_PRODUCTS = 'lll_products_v2';
@@ -134,7 +134,7 @@ export async function getAllProducts(): Promise<Product[]> {
       const q = query(productsRef, orderBy('createdAt', 'desc'));
       const snapshot = await getDocs(q);
       if (!snapshot.empty) {
-        const firestoreProducts = snapshot.docs.map(docSnap => docSnap.data() as Product);
+        const firestoreProducts = snapshot.docs.map((docSnap: QueryDocumentSnapshot) => docSnap.data() as Product);
         setLocalProducts(firestoreProducts);
         return firestoreProducts;
       }
@@ -155,8 +155,41 @@ export async function getProductById(id: string): Promise<Product | null> {
   return products.find(p => p.id === id) || null;
 }
 
-export async function saveProduct(product: Product): Promise<void> {
-  // Update local memory & storage
+export async function saveProduct(product: Product): Promise<{ success: boolean; notice?: string }> {
+  // If in browser, execute mutation via secure server API enforcing role authorization & marketplace restrictions
+  if (typeof window !== 'undefined') {
+    const isUpdate = Boolean(product.id && getLocalProducts().some(p => p.id === product.id));
+    const endpoint = '/api/admin/products';
+    const method = isUpdate ? 'PUT' : 'POST';
+
+    const res = await fetch(endpoint, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(product),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Failed to save candle. Check administrator permissions.');
+    }
+
+    const saved: Product = data.product || product;
+    const current = getLocalProducts();
+    const existingIdx = current.findIndex(p => p.id === saved.id);
+    let updated: Product[];
+
+    if (existingIdx >= 0) {
+      updated = [...current];
+      updated[existingIdx] = saved;
+    } else {
+      updated = [saved, ...current.filter(p => p.slug !== saved.slug)];
+    }
+
+    setLocalProducts(updated);
+    return { success: true, notice: data.notice };
+  }
+
+  // Server-side direct execution fallback
   const current = getLocalProducts();
   const existingIdx = current.findIndex(p => p.id === product.id);
   let updated: Product[];
@@ -170,10 +203,9 @@ export async function saveProduct(product: Product): Promise<void> {
 
   setLocalProducts(updated);
 
-  // Sync to Supabase if configured
   if (isSupabaseConfigured()) {
     try {
-      const supabase = typeof window === 'undefined' ? getSupabaseServerClient(true) : getSupabaseBrowserClient();
+      const supabase = getSupabaseServerClient(true);
       if (supabase) {
         await supabase.from('products').upsert({
           id: product.id,
@@ -201,40 +233,38 @@ export async function saveProduct(product: Product): Promise<void> {
     }
   }
 
-  // Sync to Firestore if configured
-  if (isFirebaseConfigured() && db) {
-    try {
-      const docRef = doc(db, 'products', product.id);
-      await setDoc(docRef, product, { merge: true });
-    } catch (err) {
-      console.error('Failed to sync product to Firestore:', err);
-    }
-  }
+  return { success: true };
 }
 
 export async function deleteProduct(id: string): Promise<void> {
-  const current = getLocalProducts();
-  const updated = current.filter(p => p.id !== id);
-  setLocalProducts(updated);
+  // If in browser, route through secure server API enforcing Super Admin permission
+  if (typeof window !== 'undefined') {
+    const res = await fetch(`/api/admin/products?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
 
-  // Delete from Supabase if configured
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Failed to delete candle. Only Super Administrators can delete products.');
+    }
+
+    const current = getLocalProducts();
+    setLocalProducts(current.filter(p => p.id !== id));
+    return;
+  }
+
+  // Server-side fallback
+  const current = getLocalProducts();
+  setLocalProducts(current.filter(p => p.id !== id));
+
   if (isSupabaseConfigured()) {
     try {
-      const supabase = typeof window === 'undefined' ? getSupabaseServerClient(true) : getSupabaseBrowserClient();
+      const supabase = getSupabaseServerClient(true);
       if (supabase) {
         await supabase.from('products').delete().eq('id', id);
       }
     } catch (err) {
       console.error('Failed to delete product from Supabase:', err);
-    }
-  }
-
-  if (isFirebaseConfigured() && db) {
-    try {
-      const docRef = doc(db, 'products', id);
-      await deleteDoc(docRef);
-    } catch (err) {
-      console.error('Failed to delete product from Firestore:', err);
     }
   }
 }

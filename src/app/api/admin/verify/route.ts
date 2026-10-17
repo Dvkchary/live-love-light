@@ -1,25 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth, currentUser } from '@clerk/nextjs/server';
+import { getAuthenticatedUser, getAdminPermissions } from '@/lib/server-auth';
 
 export async function GET() {
   try {
-    const { userId } = await auth();
-    if (userId) {
-      const user = await currentUser();
-      const email = user?.primaryEmailAddress?.emailAddress;
-      const role = (user?.publicMetadata as { role?: string })?.role;
+    const auth = await getAuthenticatedUser();
 
-      if (
-        role === 'admin' ||
-        email?.endsWith('@livelovelight.website') ||
-        email?.endsWith('@livelovelight.in')
-      ) {
-        return NextResponse.json({ authorized: true, method: 'clerk' });
-      }
+    if (auth.isAuthenticated && (auth.role === 'super_admin' || auth.role === 'product_manager')) {
+      return NextResponse.json({
+        authorized: true,
+        role: auth.role,
+        permissions: auth.permissions,
+        method: 'clerk',
+      });
     }
 
     return NextResponse.json({ authorized: false });
-  } catch (error) {
+  } catch (error: unknown) {
+    const err = error as { digest?: string };
+    if (err?.digest === 'HANGING_PROMISE_REJECTION' || err?.digest?.startsWith('NEXT_')) {
+      throw error;
+    }
     console.error('Error verifying admin authorization:', error);
     return NextResponse.json({ authorized: false }, { status: 500 });
   }
@@ -28,24 +28,15 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     // 1. Check if user is authenticated via Clerk as an administrator
-    const { userId } = await auth();
-    if (userId) {
-      const user = await currentUser();
-      const email = user?.primaryEmailAddress?.emailAddress;
-      const role = (user?.publicMetadata as { role?: string })?.role;
-
-      if (
-        role === 'admin' ||
-        email?.endsWith('@livelovelight.website') ||
-        email?.endsWith('@livelovelight.in')
-      ) {
-        return NextResponse.json({
-          success: true,
-          authorized: true,
-          method: 'clerk',
-          role: 'admin',
-        });
-      }
+    const auth = await getAuthenticatedUser();
+    if (auth.isAuthenticated && (auth.role === 'super_admin' || auth.role === 'product_manager')) {
+      return NextResponse.json({
+        success: true,
+        authorized: true,
+        role: auth.role,
+        permissions: auth.permissions,
+        method: 'clerk',
+      });
     }
 
     // 2. Validate against server-only ADMIN_SECRET_KEY (never exposed to client bundles)
@@ -65,7 +56,8 @@ export async function POST(req: NextRequest) {
         success: true,
         authorized: true,
         method: 'passcode',
-        role: 'admin',
+        role: 'super_admin',
+        permissions: getAdminPermissions('super_admin'),
       });
 
       // Secure session cookie for the browser session

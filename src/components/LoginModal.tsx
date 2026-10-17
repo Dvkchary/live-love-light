@@ -11,7 +11,6 @@ import {
   ShieldAlert,
   CheckCircle2,
   AlertCircle,
-  Sparkles,
   Lock
 } from 'lucide-react';
 
@@ -27,8 +26,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     sendEmailOtp,
     verifyEmailOtp,
     sendMobileOtp,
-    verifyMobileOtp,
-    loginWithDemoUser
+    verifyMobileOtp
   } = useAuth();
 
   const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
@@ -112,11 +110,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDemoSignIn = (role: 'customer' | 'admin') => {
-    loginWithDemoUser(role, identifier || (role === 'admin' ? 'admin@livelovelight.in' : 'patron@livelovelight.in'));
-    onClose();
   };
 
   return (
@@ -346,33 +339,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               </div>
             </form>
           )}
-
-          {/* Quick Development / Preview Actions */}
-          <div className="mt-6 pt-5 border-t border-[#EAE3D9] text-center">
-            <p className="text-[11px] font-semibold tracking-wider uppercase text-[#786C63] mb-2 flex items-center justify-center gap-1">
-              <Sparkles className="w-3 h-3 text-[#C59B27]" />
-              Evaluation & Preview Access
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => handleDemoSignIn('customer')}
-                className="flex-1 py-1.5 px-3 rounded-lg bg-[#F6F1EC] hover:bg-[#EBE3D7] text-[#231B15] text-xs font-medium border border-[#EAE3D9] transition-colors"
-              >
-                Preview as Customer
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoSignIn('admin')}
-                className="flex-1 py-1.5 px-3 rounded-lg bg-[#F4E8C1]/80 hover:bg-[#F4E8C1] text-[#9A7513] text-xs font-semibold border border-[#D9C38F] transition-colors"
-              >
-                Preview as Admin
-              </button>
-            </div>
-            <p className="text-[10px] text-[#786C63] mt-2">
-              Instant evaluation mode without waiting for external SMS/email gateway configuration.
-            </p>
-          </div>
         </div>
       </div>
     </div>

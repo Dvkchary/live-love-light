@@ -1,0 +1,166 @@
+{
+  "name": "Live Love Light Design Tokens",
+  "version": "1.0.0",
+  "description": "Figma design tokens and theme values for Live Love Light luxury handcrafted candles website.",
+  "color": {
+    "background": {
+      "ivory": {
+        "value": "#FCFBF7",
+        "type": "color",
+        "description": "Primary background color, ultra-soft luxury ivory"
+      },
+      "cream": {
+        "value": "#F6F1EC",
+        "type": "color",
+        "description": "Secondary background color for sections and cards"
+      },
+      "subtle": {
+        "value": "#FDFCF9",
+        "type": "color",
+        "description": "Subtle card surface highlight"
+      },
+      "pureWhite": {
+        "value": "#FFFFFF",
+        "type": "color",
+        "description": "Pure white for card and modal bodies"
+      }
+    },
+    "text": {
+      "espresso": {
+        "value": "#231B15",
+        "type": "color",
+        "description": "Primary deep espresso charcoal heading and body text"
+      },
+      "espressoLight": {
+        "value": "#3D3027",
+        "type": "color",
+        "description": "Secondary dark tone for subheaders"
+      },
+      "warmGray": {
+        "value": "#786C63",
+        "type": "color",
+        "description": "Muted body text and captions"
+      },
+      "muted": {
+        "value": "#9D938B",
+        "type": "color",
+        "description": "Subtle tertiary notes and timestamps"
+      }
+    },
+    "brand": {
+      "gold": {
+        "value": "#C59B27",
+        "type": "color",
+        "description": "Primary luxury gold accent"
+      },
+      "goldLight": {
+        "value": "#DFBE58",
+        "type": "color",
+        "description": "Highlight gold gradient stop"
+      },
+      "goldDark": {
+        "value": "#9A7513",
+        "type": "color",
+        "description": "Deep antique gold for labels and borders"
+      },
+      "goldSoft": {
+        "value": "#F4E8C1",
+        "type": "color",
+        "description": "Soft gold pill badge background"
+      }
+    },
+    "border": {
+      "warm": {
+        "value": "#EAE3D9",
+        "type": "color",
+        "description": "Default border color for dividers, cards, and navigation"
+      },
+      "beige": {
+        "value": "#EBE3D7",
+        "type": "color",
+        "description": "Beige border tint"
+      },
+      "darkBeige": {
+        "value": "#DECDBA",
+        "type": "color",
+        "description": "Contrasting border tint"
+      }
+    },
+    "marketplace": {
+      "amazon": {
+        "value": "#FF9900",
+        "type": "color",
+        "description": "Amazon brand gold/orange"
+      },
+      "flipkart": {
+        "value": "#2874F0",
+        "type": "color",
+        "description": "Flipkart brand blue"
+      },
+      "meesho": {
+        "value": "#F43397",
+        "type": "color",
+        "description": "Meesho brand magenta"
+      }
+    }
+  },
+  "typography": {
+    "fontFamilies": {
+      "serif": {
+        "value": "Cormorant Garamond, Georgia, serif",
+        "type": "fontFamilies"
+      },
+      "sans": {
+        "value": "Plus Jakarta Sans, system-ui, -apple-system, sans-serif",
+        "type": "fontFamilies"
+      }
+    },
+    "fontSizes": {
+      "xs": { "value": "12px", "type": "fontSizes" },
+      "sm": { "value": "14px", "type": "fontSizes" },
+      "base": { "value": "16px", "type": "fontSizes" },
+      "lg": { "value": "18px", "type": "fontSizes" },
+      "xl": { "value": "20px", "type": "fontSizes" },
+      "2xl": { "value": "24px", "type": "fontSizes" },
+      "3xl": { "value": "30px", "type": "fontSizes" },
+      "4xl": { "value": "36px", "type": "fontSizes" },
+      "5xl": { "value": "48px", "type": "fontSizes" },
+      "6xl": { "value": "60px", "type": "fontSizes" },
+      "7xl": { "value": "72px", "type": "fontSizes" }
+    },
+    "fontWeights": {
+      "light": { "value": "300", "type": "fontWeights" },
+      "regular": { "value": "400", "type": "fontWeights" },
+      "medium": { "value": "500", "type": "fontWeights" },
+      "semibold": { "value": "600", "type": "fontWeights" },
+      "bold": { "value": "700", "type": "fontWeights" }
+    },
+    "lineHeights": {
+      "tight": { "value": "1.1", "type": "lineHeights" },
+      "snug": { "value": "1.25", "type": "lineHeights" },
+      "normal": { "value": "1.5", "type": "lineHeights" },
+      "relaxed": { "value": "1.65", "type": "lineHeights" }
+    }
+  },
+  "borderRadius": {
+    "sm": { "value": "8px", "type": "borderRadius" },
+    "md": { "value": "12px", "type": "borderRadius" },
+    "lg": { "value": "16px", "type": "borderRadius" },
+    "xl": { "value": "24px", "type": "borderRadius" },
+    "full": { "value": "9999px", "type": "borderRadius" }
+  },
+  "boxShadow": {
+    "card": {
+      "value": "0 4px 20px -2px rgba(45, 33, 23, 0.05), 0 2px 6px -1px rgba(45, 33, 23, 0.03)",
+      "type": "boxShadow"
+    },
+    "cardHover": {
+      "value": "0 12px 32px -4px rgba(45, 33, 23, 0.1), 0 4px 12px -2px rgba(45, 33, 23, 0.06)",
+      "type": "boxShadow"
+    },
+    "elevated": {
+      "value": "0 20px 40px -10px rgba(45, 33, 23, 0.15)",
+      "type": "boxShadow"
+    }
+  }
+}

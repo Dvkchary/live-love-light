@@ -128,14 +128,13 @@ vercel --prod
 1. Push the code to a Git repository.
 2. In the Vercel dashboard, click **Add New Project** and import the repository.
 3. In the **Environment Variables** section, add:
-   * `NEXT_PUBLIC_SITE_URL` (e.g., `https://livelovelight.in`)
-   * `NEXT_PUBLIC_ADMIN_KEY` (Your custom admin passphrase)
-   * `NEXT_PUBLIC_FIREBASE_API_KEY`
-   * `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
-   * `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
-   * `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
-   * `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
-   * `NEXT_PUBLIC_FIREBASE_APP_ID`
+   * `NEXT_PUBLIC_SITE_URL` (e.g., `https://livelovelight.website`)
+   * `ADMIN_SECRET_KEY` (Server-side admin passphrase)
+   * `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (Clerk publishable key)
+   * `CLERK_SECRET_KEY` (Clerk secret key)
+   * `NEXT_PUBLIC_SUPABASE_URL` (Supabase project URL)
+   * `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (Supabase publishable key)
+   * `SUPABASE_SERVICE_ROLE_KEY` (Supabase secret service-role key)
 4. Click **Deploy**.
 
 ---
@@ -144,14 +143,14 @@ vercel --prod
 
 | Feature | Provider / Source | Required Configuration | Current Fallback Status |
 | :--- | :--- | :--- | :--- |
-| **Email OTP Auth** | Firebase Authentication | Enable Email link in Firebase Console | Clear setup banner with developer evaluation mode |
-| **Mobile OTP Auth** | Firebase Phone Auth | Twilio / Firebase SMS quota | Clear configuration guidance |
-| **Catalogue Cloud DB** | Cloud Firestore | Firestore project credentials in `.env.local` | Hydrates instantly from verified local catalogue fixtures |
-| **Product Image Hosting** | Firebase Storage / Public | Firebase Storage bucket or public folder | Local static brand assets in `/images/` |
+| **Authentication** | Clerk Authentication | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` | In-app modal with OTP/Demo fallback |
+| **Database & Orders** | Supabase PostgreSQL | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Hydrates instantly from verified local catalogue fixtures |
+| **Catalogue Cloud DB** | Supabase (`public.products`) | Supabase migration script applied | Local fallback catalogue |
+| **Product Image Hosting** | Local Brand Assets / Supabase | `/images/` directory in public | Static brand assets |
 | **Amazon Product Links** | Amazon Seller Central | Amazon ASIN / Product URLs | Configurable per candle in `/admin` |
 | **Flipkart Product Links**| Flipkart Seller Hub | Flipkart FSN / Product URLs | Configurable per candle in `/admin` |
 | **Meesho Product Links** | Meesho Supplier Panel | Meesho Product URLs | Configurable per candle in `/admin` |
-| **Admin Authorization** | Environment Variable | `NEXT_PUBLIC_ADMIN_KEY` | Default key `livelovelight2026` |
+| **Admin Authorization** | Server API / Clerk | `ADMIN_SECRET_KEY` (Server-side only) or Clerk Admin Role | Secure server-side validation |
 
 ---
 

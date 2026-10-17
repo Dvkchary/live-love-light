@@ -188,14 +188,13 @@ export default function Navbar({ onSearchClick, searchQuery = '', onSearchChange
                     )}
                   </div>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => setIsLoginOpen(true)}
+                  <Link
+                    href="/login"
                     className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#231B15] text-[#FCFBF7] text-xs font-medium hover:bg-[#3D3027] transition-all shadow-sm"
                   >
                     <User className="w-3.5 h-3.5 text-[#DFBE58]" />
                     <span>Sign In</span>
-                  </button>
+                  </Link>
                 )}
               </div>
             </div>

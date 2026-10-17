@@ -1,0 +1,263 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 2100" width="1440" height="2100">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap');
+      .serif { font-family: 'Cormorant Garamond', Georgia, serif; }
+      .sans { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; }
+      .gold-grad { fill: url(#goldGradient); }
+      .card-shadow { filter: drop-shadow(0 4px 12px rgba(45,33,23,0.06)); }
+    </style>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#B58B1E" />
+      <stop offset="50%" stop-color="#D8B244" />
+      <stop offset="100%" stop-color="#9B7414" />
+    </linearGradient>
+    <linearGradient id="badgeGold" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F4E8C1" />
+      <stop offset="100%" stop-color="#EEDEA8" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1440" height="2100" fill="#FCFBF7" />
+
+  <!-- Navbar -->
+  <g id="Navbar" transform="translate(0, 0)">
+    <rect width="1440" height="84" fill="#FCFBF7" />
+    <line x1="0" y1="84" x2="1440" y2="84" stroke="#EAE3D9" stroke-width="1" />
+    
+    <g transform="translate(80, 22)">
+      <circle cx="20" cy="20" r="18" fill="#F4E8C1" />
+      <path d="M20 10 C21.5 13.5 24 16.5 24 19 C24 22 22 24.5 20 24.5 C18 24.5 16 22 16 19 C16 16.5 18.5 13.5 20 10 Z" fill="#C59B27" />
+      <text x="50" y="22" class="serif" font-size="22" font-weight="700" fill="#231B15" letter-spacing="2">LIVE LOVE LIGHT</text>
+      <text x="52" y="34" class="sans" font-size="8.5" font-weight="600" fill="#9A7513" letter-spacing="3">HANDCRAFTED CANDLES</text>
+    </g>
+
+    <g transform="translate(600, 48)" class="sans" font-size="13" font-weight="600" fill="#786C63" letter-spacing="1.5">
+      <text x="0" y="0">COLLECTION</text>
+      <text x="120" y="0">OUR STORY</text>
+      <text x="240" y="0">CANDLE CARE</text>
+      <text x="360" y="0">CONTACT</text>
+    </g>
+
+    <g transform="translate(1220, 24)">
+      <rect x="0" y="0" width="120" height="36" rx="18" fill="#231B15" />
+      <text x="60" y="23" text-anchor="middle" class="sans" font-size="11" font-weight="600" fill="#FCFBF7">My Account</text>
+    </g>
+  </g>
+
+  <!-- Breadcrumbs -->
+  <g id="Breadcrumbs" transform="translate(100, 114)" class="sans" font-size="12" fill="#786C63">
+    <text x="0" y="0">Home / Collection / Teddy Candles / <tspan font-weight="600" fill="#231B15">Teddy Candle — Royal Oud</tspan></text>
+  </g>
+
+  <!-- ==================== MAIN PRODUCT STUDIO ==================== -->
+  <g id="Product-Studio" transform="translate(100, 150)">
+    
+    <!-- LEFT COLUMN: Product Gallery (Sticky) -->
+    <g id="Gallery" transform="translate(0, 0)">
+      <!-- Main Photo Frame -->
+      <rect width="560" height="580" rx="24" fill="#F6F1EC" stroke="#EAE3D9" stroke-width="1.5" class="card-shadow" />
+      
+      <!-- Visual candle mockup illustration -->
+      <circle cx="280" cy="270" r="160" fill="#EBE3D7" />
+      <rect x="200" y="160" width="160" height="200" rx="16" fill="#C59B27" opacity="0.15" stroke="#C59B27" stroke-width="2.5" />
+      <path d="M280 110 C285 125 292 138 292 148 C292 156 286 162 280 162 C274 162 268 156 268 148 C268 138 275 125 280 110 Z" fill="#C59B27" />
+      <rect x="220" y="220" width="120" height="80" rx="8" fill="#FFFFFF" stroke="#DECDBA" />
+      <text x="280" y="252" text-anchor="middle" class="serif" font-size="15" font-weight="700" fill="#231B15">ROYAL OUD</text>
+      <text x="280" y="270" text-anchor="middle" class="sans" font-size="9" font-weight="600" fill="#9A7513" letter-spacing="1">100% BOTANICAL SOY</text>
+
+      <!-- Purity Stamp -->
+      <g transform="translate(420, 30)">
+        <circle cx="50" cy="50" r="45" fill="#FFFFFF" stroke="#D9C38F" stroke-width="1.5" />
+        <circle cx="50" cy="50" r="40" fill="#FDFCF9" stroke="#EAE3D9" stroke-dasharray="3 3" />
+        <text x="50" y="44" text-anchor="middle" class="sans" font-size="9" font-weight="700" fill="#9A7513">100%</text>
+        <text x="50" y="58" text-anchor="middle" class="serif" font-size="11" font-weight="700" fill="#231B15">PURE SOY</text>
+      </g>
+
+      <!-- Thumbnail Strip -->
+      <g transform="translate(0, 605)">
+        <rect x="0" y="0" width="95" height="95" rx="12" fill="#F6F1EC" stroke="#C59B27" stroke-width="2" />
+        <rect x="110" y="0" width="95" height="95" rx="12" fill="#F6F1EC" stroke="#EAE3D9" />
+        <rect x="220" y="0" width="95" height="95" rx="12" fill="#F6F1EC" stroke="#EAE3D9" />
+        <rect x="330" y="0" width="95" height="95" rx="12" fill="#F6F1EC" stroke="#EAE3D9" />
+      </g>
+
+      <!-- Guarantee Badges below gallery -->
+      <g transform="translate(0, 725)">
+        <rect width="560" height="70" rx="16" fill="#FFFFFF" stroke="#EAE3D9" />
+        <text x="35" y="40" class="sans" font-size="12" font-weight="600" fill="#231B15">✨ Clean Smoke-Free Burn</text>
+        <text x="220" y="40" class="sans" font-size="12" font-weight="600" fill="#231B15">📦 Shatter-Proof Packaging</text>
+        <text x="410" y="40" class="sans" font-size="12" font-weight="600" fill="#231B15">🌿 Zero Toxins</text>
+      </g>
+    </g>
+
+    <!-- RIGHT COLUMN: Product Details & Buying Channels -->
+    <g id="Details" transform="translate(620, 0)">
+      <!-- Category & Badge -->
+      <rect x="0" y="0" width="130" height="26" rx="13" fill="#F4E8C1" stroke="#D9C38F" />
+      <text x="65" y="17" text-anchor="middle" class="sans" font-size="10.5" font-weight="700" fill="#9A7513" letter-spacing="1">
+        TEDDY CANDLES
+      </text>
+
+      <!-- Product Title -->
+      <text x="0" y="65" class="serif" font-size="38" font-weight="700" fill="#231B15">
+        Teddy Candle — Royal Oud
+      </text>
+
+      <!-- Rating & In Stock -->
+      <g transform="translate(0, 85)">
+        <text x="0" y="15" class="sans" font-size="13" font-weight="600" fill="#231B15">
+          ★★★★★ 4.9 <tspan font-weight="400" fill="#786C63">(42 Verified Customer Ratings)</tspan>
+        </text>
+        <rect x="290" y="0" width="80" height="22" rx="11" fill="#E8F5E9" />
+        <text x="330" y="15" text-anchor="middle" class="sans" font-size="10" font-weight="700" fill="#2E7D32">IN STOCK</text>
+      </g>
+
+      <!-- Pricing Bar -->
+      <g transform="translate(0, 130)">
+        <text x="0" y="28" class="sans" font-size="32" font-weight="700" fill="#231B15">₹399</text>
+        <text x="90" y="28" class="sans" font-size="18" text-decoration="line-through" fill="#9D938B">₹599</text>
+        <rect x="155" y="6" width="85" height="26" rx="13" fill="#F4E8C1" />
+        <text x="197" y="23" text-anchor="middle" class="sans" font-size="11" font-weight="700" fill="#9A7513">SAVE 33%</text>
+        <text x="255" y="24" class="sans" font-size="12" fill="#786C63">Inclusive of all taxes</text>
+      </g>
+
+      <!-- Description -->
+      <text x="0" y="200" class="sans" font-size="14" fill="#786C63" width="600">
+        <tspan x="0" dy="0">An adorable, delicately hand-carved teddy bear candle sculpted in 100%</tspan>
+        <tspan x="0" dy="24">botanical soy wax and infused with deep, velvety royal oud and cozy amber</tspan>
+        <tspan x="0" dy="24">notes. Perfect as a heartwarming keepsake, home accent, or luxury gift.</tspan>
+      </text>
+
+      <!-- Fragrance Pyramid Card -->
+      <g transform="translate(0, 275)" class="card-shadow">
+        <rect width="600" height="150" rx="16" fill="#F6F1EC" stroke="#EAE3D9" />
+        <text x="24" y="32" class="serif" font-size="18" font-weight="700" fill="#231B15">Fragrance Note Pyramid</text>
+
+        <!-- Top Note -->
+        <g transform="translate(24, 55)">
+          <text x="0" y="0" class="sans" font-size="10.5" font-weight="700" fill="#9A7513" letter-spacing="1">TOP NOTES</text>
+          <text x="0" y="20" class="sans" font-size="12.5" font-weight="600" fill="#231B15">Sweet Bergamot, Warm Cardamom</text>
+        </g>
+        <!-- Heart Note -->
+        <g transform="translate(24, 90)">
+          <text x="0" y="0" class="sans" font-size="10.5" font-weight="700" fill="#9A7513" letter-spacing="1">HEART NOTES</text>
+          <text x="0" y="20" class="sans" font-size="12.5" font-weight="600" fill="#231B15">Smoky Agarwood (Oud), Virginia Cedar</text>
+        </g>
+        <!-- Base Note -->
+        <g transform="translate(24, 125)">
+          <text x="0" y="0" class="sans" font-size="10.5" font-weight="700" fill="#9A7513" letter-spacing="1">BASE NOTES</text>
+          <text x="0" y="20" class="sans" font-size="12.5" font-weight="600" fill="#231B15">Velvet Golden Amber, Madagascar Vanilla</text>
+        </g>
+      </g>
+
+      <!-- DIRECT MARKETPLACE ORDER CHANNELS (Primary Call to Action) -->
+      <g transform="translate(0, 450)">
+        <text x="0" y="0" class="sans" font-size="12" font-weight="700" fill="#231B15" letter-spacing="1">
+          CHOOSE YOUR PREFERRED ORDER CHANNEL:
+        </text>
+
+        <!-- 1. Amazon Button -->
+        <g transform="translate(0, 16)">
+          <rect width="600" height="60" rx="16" fill="#231B15" class="card-shadow" />
+          <circle cx="36" cy="30" r="14" fill="#FF9900" />
+          <text x="36" y="35" text-anchor="middle" class="sans" font-size="12" font-weight="800" fill="#231B15">a</text>
+          <text x="65" y="28" class="sans" font-size="14" font-weight="700" fill="#FCFBF7">Buy Directly on Amazon.in</text>
+          <text x="65" y="46" class="sans" font-size="11" fill="#DFBE58">Prime Delivery Available • Cash on Delivery • 1-Day Dispatch</text>
+          <text x="565" y="36" text-anchor="end" class="sans" font-size="18" fill="#FCFBF7">→</text>
+        </g>
+
+        <!-- 2. Flipkart Button -->
+        <g transform="translate(0, 88)">
+          <rect width="600" height="60" rx="16" fill="#FFFFFF" stroke="#EAE3D9" stroke-width="1.5" />
+          <circle cx="36" cy="30" r="14" fill="#2874F0" />
+          <text x="36" y="34" text-anchor="middle" class="sans" font-size="10" font-weight="800" fill="#FFFFFF">fk</text>
+          <text x="65" y="28" class="sans" font-size="14" font-weight="700" fill="#231B15">Buy on Flipkart</text>
+          <text x="65" y="46" class="sans" font-size="11" fill="#786C63">Flipkart Assured • Express Shipping Across India</text>
+          <text x="565" y="36" text-anchor="end" class="sans" font-size="18" fill="#231B15">→</text>
+        </g>
+
+        <!-- 3. Meesho Button -->
+        <g transform="translate(0, 160)">
+          <rect width="600" height="60" rx="16" fill="#FFFFFF" stroke="#EAE3D9" stroke-width="1.5" />
+          <circle cx="36" cy="30" r="14" fill="#F43397" />
+          <text x="36" y="34" text-anchor="middle" class="sans" font-size="10" font-weight="800" fill="#FFFFFF">m</text>
+          <text x="65" y="28" class="sans" font-size="14" font-weight="700" fill="#231B15">Buy on Meesho</text>
+          <text x="65" y="46" class="sans" font-size="11" fill="#786C63">Best Value Deals • Direct Manufacturer Price</text>
+          <text x="565" y="36" text-anchor="end" class="sans" font-size="18" fill="#231B15">→</text>
+        </g>
+      </g>
+
+      <!-- Specifications Table -->
+      <g transform="translate(0, 700)">
+        <rect width="600" height="210" rx="16" fill="#FFFFFF" stroke="#EAE3D9" />
+        <text x="24" y="32" class="serif" font-size="18" font-weight="700" fill="#231B15">Product Specifications</text>
+        
+        <line x1="24" y1="46" x2="576" y2="46" stroke="#EAE3D9" />
+        
+        <text x="24" y="75" class="sans" font-size="12" fill="#786C63">Wax Formulation</text>
+        <text x="200" y="75" class="sans" font-size="12" font-weight="600" fill="#231B15">100% Pure Botanical Soy Wax</text>
+
+        <line x1="24" y1="88" x2="576" y2="88" stroke="#F6F1EC" />
+
+        <text x="24" y="112" class="sans" font-size="12" fill="#786C63">Approx. Burn Time</text>
+        <text x="200" y="112" class="sans" font-size="12" font-weight="600" fill="#231B15">40 Hours Continuous</text>
+
+        <line x1="24" y1="125" x2="576" y2="125" stroke="#F6F1EC" />
+
+        <text x="24" y="149" class="sans" font-size="12" fill="#786C63">Net Weight</text>
+        <text x="200" y="149" class="sans" font-size="12" font-weight="600" fill="#231B15">220 Grams</text>
+
+        <line x1="24" y1="162" x2="576" y2="162" stroke="#F6F1EC" />
+
+        <text x="24" y="186" class="sans" font-size="12" fill="#786C63">Dimensions</text>
+        <text x="200" y="186" class="sans" font-size="12" font-weight="600" fill="#231B15">8.5 x 7.0 x 6.0 cm</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- ==================== RELATED ARTISAN CANDLES ==================== -->
+  <g id="Related-Products" transform="translate(100, 1160)">
+    <text x="0" y="0" class="serif" font-size="30" font-weight="700" fill="#231B15">More Handcrafted Pieces You'll Adore</text>
+    
+    <g transform="translate(0, 30)">
+      <!-- Card A -->
+      <rect x="0" y="0" width="385" height="360" rx="18" fill="#FFFFFF" stroke="#EAE3D9" />
+      <rect x="14" y="14" width="357" height="200" rx="12" fill="#F6F1EC" />
+      <text x="192" y="120" text-anchor="middle" class="serif" font-size="18" font-weight="700" fill="#231B15">DAISY JASMINE</text>
+      <text x="24" y="245" class="sans" font-size="10.5" font-weight="700" fill="#9A7513">FLOWER CANDLE</text>
+      <text x="24" y="270" class="serif" font-size="20" font-weight="700" fill="#231B15">Daisy Flower Candle</text>
+      <text x="24" y="300" class="sans" font-size="18" font-weight="700" fill="#231B15">₹349 <tspan font-size="12" text-decoration="line-through" fill="#9D938B">₹499</tspan></text>
+
+      <!-- Card B -->
+      <rect x="427" y="0" width="385" height="360" rx="18" fill="#FFFFFF" stroke="#EAE3D9" />
+      <rect x="441" y="14" width="357" height="200" rx="12" fill="#F6F1EC" />
+      <text x="619" y="120" text-anchor="middle" class="serif" font-size="18" font-weight="700" fill="#231B15">PEONY OUD</text>
+      <text x="451" y="245" class="sans" font-size="10.5" font-weight="700" fill="#9A7513">ROSE CANDLE</text>
+      <text x="451" y="270" class="serif" font-size="20" font-weight="700" fill="#231B15">Peony Bloom Candle</text>
+      <text x="451" y="300" class="sans" font-size="18" font-weight="700" fill="#231B15">₹449 <tspan font-size="12" text-decoration="line-through" fill="#9D938B">₹649</tspan></text>
+
+      <!-- Card C -->
+      <rect x="855" y="0" width="385" height="360" rx="18" fill="#FFFFFF" stroke="#EAE3D9" />
+      <rect x="869" y="14" width="357" height="200" rx="12" fill="#F6F1EC" />
+      <text x="1047" y="120" text-anchor="middle" class="serif" font-size="18" font-weight="700" fill="#231B15">LOTUS SANDALWOOD</text>
+      <text x="879" y="245" class="sans" font-size="10.5" font-weight="700" fill="#9A7513">FLOWER CANDLE</text>
+      <text x="879" y="270" class="serif" font-size="20" font-weight="700" fill="#231B15">Lotus Sacred Candle</text>
+      <text x="879" y="300" class="sans" font-size="18" font-weight="700" fill="#231B15">₹379 <tspan font-size="12" text-decoration="line-through" fill="#9D938B">₹549</tspan></text>
+    </g>
+  </g>
+
+  <!-- Footer -->
+  <g id="Footer" transform="translate(0, 1800)">
+    <rect width="1440" height="300" fill="#231B15" />
+    <g transform="translate(100, 50)">
+      <text x="0" y="24" class="serif" font-size="24" font-weight="700" fill="#FCFBF7" letter-spacing="2">LIVE LOVE LIGHT</text>
+      <text x="0" y="44" class="sans" font-size="10" font-weight="600" fill="#DFBE58" letter-spacing="2">LIGHT SOMETHING BEAUTIFUL</text>
+      <line x1="0" y1="180" x2="1240" y2="180" stroke="#3D3027" stroke-width="1" />
+      <text x="0" y="215" class="sans" font-size="11" fill="#786C63">
+        © 2026 Live Love Light. All rights reserved. Handcrafted in India.
+      </text>
+    </g>
+  </g>
+</svg>

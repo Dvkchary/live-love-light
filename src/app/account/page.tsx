@@ -17,13 +17,10 @@ import {
   ArrowRight,
   Package
 } from 'lucide-react';
-import LoginModal from '@/components/LoginModal';
-
 export default function AccountPage() {
-  const { user, logout, openSignIn } = useAuth();
+  const { user, logout } = useAuth();
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
 
   useEffect(() => {
     getAllProducts().then(setAllProducts);
@@ -209,32 +206,17 @@ export default function AccountPage() {
             </div>
 
             <div className="space-y-3">
-              <button
-                type="button"
-                onClick={() => {
-                  if (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
-                    openSignIn();
-                  } else {
-                    setIsLoginOpen(true);
-                  }
-                }}
-                className="w-full py-3 px-4 rounded-xl bg-[#231B15] hover:bg-[#3D3027] text-white text-xs font-semibold tracking-wider uppercase transition-colors"
+              <Link
+                href="/login"
+                className="w-full py-3 px-4 rounded-xl bg-[#231B15] hover:bg-[#3D3027] text-white text-xs font-semibold tracking-wider uppercase transition-colors inline-block text-center"
               >
                 Sign In to Your Account
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsLoginOpen(true)}
-                className="w-full py-2.5 px-4 rounded-xl bg-[#F6F1EC] hover:bg-[#EBE3D7] text-[#231B15] text-xs font-medium border border-[#EAE3D9] transition-colors"
-              >
-                Preview / Demo Mode
-              </button>
+              </Link>
             </div>
           </div>
         )}
       </main>
 
-      <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
       <Footer />
     </div>
   );

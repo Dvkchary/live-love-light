@@ -1,0 +1,303 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 2150" width="1440" height="2150">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap');
+      .serif { font-family: 'Cormorant Garamond', Georgia, serif; }
+      .sans { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; }
+      .gold-grad { fill: url(#goldGradient); }
+      .card-shadow { filter: drop-shadow(0 4px 12px rgba(45,33,23,0.06)); }
+    </style>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#B58B1E" />
+      <stop offset="50%" stop-color="#D8B244" />
+      <stop offset="100%" stop-color="#9B7414" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1440" height="2150" fill="#FCFBF7" />
+
+  <!-- Top Title Banner -->
+  <g id="Header" transform="translate(100, 60)">
+    <rect width="1240" height="150" rx="24" fill="#231B15" />
+    <g transform="translate(60, 45)">
+      <circle cx="28" cy="28" r="22" fill="#F4E8C1" />
+      <path d="M28 16 C29.5 19.5 32 22.5 32 25 C32 28 30 30.5 28 30.5 C26 30.5 24 28 24 25 C24 22.5 26.5 19.5 28 16 Z" fill="#C59B27" />
+      <text x="65" y="26" class="serif" font-size="28" font-weight="700" fill="#FCFBF7" letter-spacing="2">LIVE LOVE LIGHT</text>
+      <text x="66" y="44" class="sans" font-size="11" font-weight="600" fill="#DFBE58" letter-spacing="3">UI/UX DESIGN SYSTEM &amp; COMPONENT SPECIFICATION</text>
+      <text x="1100" y="36" text-anchor="end" class="sans" font-size="12" font-weight="600" fill="#9D938B">Version 1.0 • Client Handoff Kit</text>
+    </g>
+  </g>
+
+  <!-- ==================== 1. COLOR PALETTE ==================== -->
+  <g id="Color-Palette" transform="translate(100, 250)">
+    <text x="0" y="0" class="serif" font-size="28" font-weight="700" fill="#231B15">01. Color Architecture</text>
+    <text x="0" y="24" class="sans" font-size="13" fill="#786C63">Harmonious warm luxury palette built on botanical ivory, rich espresso, and metallic amber gold</text>
+
+    <!-- Swatches Row 1: Brand & Neutrals -->
+    <g transform="translate(0, 50)">
+      <!-- Swatch 1: Ivory -->
+      <g transform="translate(0, 0)">
+        <rect width="180" height="110" rx="14" fill="#FCFBF7" stroke="#EAE3D9" stroke-width="2" />
+        <rect x="0" y="110" width="180" height="70" rx="0" fill="#FFFFFF" stroke="#EAE3D9" />
+        <text x="16" y="132" class="sans" font-size="12" font-weight="700" fill="#231B15">Ivory Base</text>
+        <text x="16" y="150" class="sans" font-size="11" fill="#786C63">#FCFBF7</text>
+        <text x="16" y="168" class="sans" font-size="10" fill="#9D938B">Page Canvas</text>
+      </g>
+
+      <!-- Swatch 2: Cream -->
+      <g transform="translate(210, 0)">
+        <rect width="180" height="110" rx="14" fill="#F6F1EC" stroke="#EAE3D9" stroke-width="1.5" />
+        <rect x="0" y="110" width="180" height="70" rx="0" fill="#FFFFFF" stroke="#EAE3D9" />
+        <text x="16" y="132" class="sans" font-size="12" font-weight="700" fill="#231B15">Warm Cream</text>
+        <text x="16" y="150" class="sans" font-size="11" fill="#786C63">#F6F1EC</text>
+        <text x="16" y="168" class="sans" font-size="10" fill="#9D938B">Cards &amp; Sections</text>
+      </g>
+
+      <!-- Swatch 3: Soft Gold -->
+      <g transform="translate(420, 0)">
+        <rect width="180" height="110" rx="14" fill="#F4E8C1" stroke="#D9C38F" stroke-width="1.5" />
+        <rect x="0" y="110" width="180" height="70" rx="0" fill="#FFFFFF" stroke="#EAE3D9" />
+        <text x="16" y="132" class="sans" font-size="12" font-weight="700" fill="#231B15">Soft Gold Pill</text>
+        <text x="16" y="150" class="sans" font-size="11" fill="#786C63">#F4E8C1</text>
+        <text x="16" y="168" class="sans" font-size="10" fill="#9D938B">Badges &amp; Tags</text>
+      </g>
+
+      <!-- Swatch 4: Luxury Gold -->
+      <g transform="translate(630, 0)">
+        <rect width="180" height="110" rx="14" fill="#C59B27" />
+        <rect x="0" y="110" width="180" height="70" rx="0" fill="#FFFFFF" stroke="#EAE3D9" />
+        <text x="16" y="132" class="sans" font-size="12" font-weight="700" fill="#231B15">Luxury Gold</text>
+        <text x="16" y="150" class="sans" font-size="11" fill="#786C63">#C59B27</text>
+        <text x="16" y="168" class="sans" font-size="10" fill="#9D938B">Primary Accent</text>
+      </g>
+
+      <!-- Swatch 5: Antique Gold -->
+      <g transform="translate(840, 0)">
+        <rect width="180" height="110" rx="14" fill="#9A7513" />
+        <rect x="0" y="110" width="180" height="70" rx="0" fill="#FFFFFF" stroke="#EAE3D9" />
+        <text x="16" y="132" class="sans" font-size="12" font-weight="700" fill="#231B15">Antique Gold</text>
+        <text x="16" y="150" class="sans" font-size="11" fill="#786C63">#9A7513</text>
+        <text x="16" y="168" class="sans" font-size="10" fill="#9D938B">Subtitles &amp; Links</text>
+      </g>
+
+      <!-- Swatch 6: Espresso Charcoal -->
+      <g transform="translate(1050, 0)">
+        <rect width="180" height="110" rx="14" fill="#231B15" />
+        <rect x="0" y="110" width="180" height="70" rx="0" fill="#FFFFFF" stroke="#EAE3D9" />
+        <text x="16" y="132" class="sans" font-size="12" font-weight="700" fill="#231B15">Deep Espresso</text>
+        <text x="16" y="150" class="sans" font-size="11" fill="#786C63">#231B15</text>
+        <text x="16" y="168" class="sans" font-size="10" fill="#9D938B">Primary Typography</text>
+      </g>
+    </g>
+
+    <!-- Marketplace Brand Accents -->
+    <g transform="translate(0, 255)">
+      <text x="0" y="0" class="sans" font-size="12" font-weight="700" fill="#786C63" letter-spacing="1">MARKETPLACE RECOGNITION PALETTE:</text>
+      
+      <!-- Amazon -->
+      <g transform="translate(0, 15)">
+        <rect width="140" height="42" rx="10" fill="#FF9900" fill-opacity="0.15" stroke="#FF9900" />
+        <text x="70" y="26" text-anchor="middle" class="sans" font-size="12" font-weight="700" fill="#FF9900">Amazon #FF9900</text>
+      </g>
+
+      <!-- Flipkart -->
+      <g transform="translate(160, 15)">
+        <rect width="140" height="42" rx="10" fill="#2874F0" fill-opacity="0.15" stroke="#2874F0" />
+        <text x="70" y="26" text-anchor="middle" class="sans" font-size="12" font-weight="700" fill="#2874F0">Flipkart #2874F0</text>
+      </g>
+
+      <!-- Meesho -->
+      <g transform="translate(320, 15)">
+        <rect width="140" height="42" rx="10" fill="#F43397" fill-opacity="0.15" stroke="#F43397" />
+        <text x="70" y="26" text-anchor="middle" class="sans" font-size="12" font-weight="700" fill="#F43397">Meesho #F43397</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- ==================== 2. TYPOGRAPHY SYSTEM ==================== -->
+  <g id="Typography-System" transform="translate(100, 610)">
+    <text x="0" y="0" class="serif" font-size="28" font-weight="700" fill="#231B15">02. Typography Scales &amp; Hierarchy</text>
+    <text x="0" y="24" class="sans" font-size="13" fill="#786C63">Cormorant Garamond (Editorial Luxury Serif) + Plus Jakarta Sans (Clean Modern Sans-Serif)</text>
+
+    <g transform="translate(0, 50)">
+      <rect width="1240" height="340" rx="20" fill="#FFFFFF" stroke="#EAE3D9" />
+      
+      <!-- Row 1: Display H1 -->
+      <g transform="translate(30, 45)">
+        <text x="0" y="0" class="sans" font-size="11" font-weight="700" fill="#9A7513" letter-spacing="1">DISPLAY H1 • 64PX • SERIF BOLD</text>
+        <text x="0" y="42" class="serif" font-size="44" font-weight="700" fill="#231B15">Light Something Beautiful</text>
+        <line x1="0" y1="65" x2="1180" y2="65" stroke="#F6F1EC" />
+      </g>
+
+      <!-- Row 2: Headline H2 -->
+      <g transform="translate(30, 140)">
+        <text x="0" y="0" class="sans" font-size="11" font-weight="700" fill="#9A7513" letter-spacing="1">SECTION H2 • 36PX • SERIF SEMIBOLD</text>
+        <text x="0" y="32" class="serif" font-size="28" font-weight="600" fill="#231B15">Sculpted Petal by Petal With Pure Soy</text>
+        <line x1="0" y1="52" x2="1180" y2="52" stroke="#F6F1EC" />
+      </g>
+
+      <!-- Row 3: Product Name H3 -->
+      <g transform="translate(30, 225)">
+        <text x="0" y="0" class="sans" font-size="11" font-weight="700" fill="#9A7513" letter-spacing="1">PRODUCT TITLE • 22PX • SERIF BOLD</text>
+        <text x="0" y="25" class="serif" font-size="20" font-weight="700" fill="#231B15">Teddy Candle — Royal Oud &amp; Velvet Amber</text>
+        <line x1="0" y1="42" x2="1180" y2="42" stroke="#F6F1EC" />
+      </g>
+
+      <!-- Row 4: Body Text -->
+      <g transform="translate(30, 295)">
+        <text x="0" y="0" class="sans" font-size="11" font-weight="700" fill="#9A7513" letter-spacing="1">BODY COPY • 15PX • SANS REGULAR</text>
+        <text x="0" y="24" class="sans" font-size="14" fill="#786C63">Delicately hand-carved botanical soy wax infused with prestigious aromatics. Smokeless burn guaranteed.</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- ==================== 3. MASTER BUTTON & COMPONENT VARIANTS ==================== -->
+  <g id="Component-Master" transform="translate(100, 1050)">
+    <text x="0" y="0" class="serif" font-size="28" font-weight="700" fill="#231B15">03. Master Component Library</text>
+    <text x="0" y="24" class="sans" font-size="13" fill="#786C63">Pixel-perfect UI primitives: buttons, interactive chips, product badges, and rating displays</text>
+
+    <!-- SECTION: BUTTONS -->
+    <g transform="translate(0, 50)">
+      <text x="0" y="0" class="sans" font-size="13" font-weight="700" fill="#231B15" letter-spacing="1">BUTTON STATES &amp; VARIANTS</text>
+      
+      <!-- Primary Espresso -->
+      <g transform="translate(0, 16)">
+        <rect width="200" height="48" rx="24" fill="#231B15" />
+        <text x="100" y="29" text-anchor="middle" class="sans" font-size="12" font-weight="700" fill="#FCFBF7" letter-spacing="1">PRIMARY BUTTON →</text>
+        <text x="100" y="66" text-anchor="middle" class="sans" font-size="10" fill="#786C63">Default Dark CTA</text>
+      </g>
+
+      <!-- Gold Accent -->
+      <g transform="translate(225, 16)">
+        <rect width="200" height="48" rx="24" fill="#C59B27" />
+        <text x="100" y="29" text-anchor="middle" class="sans" font-size="12" font-weight="700" fill="#231B15" letter-spacing="1">GOLD ACCENT CTA</text>
+        <text x="100" y="66" text-anchor="middle" class="sans" font-size="10" fill="#786C63">High-Conversion Pill</text>
+      </g>
+
+      <!-- Outline Warm -->
+      <g transform="translate(450, 16)">
+        <rect width="200" height="48" rx="24" fill="#FFFFFF" stroke="#EAE3D9" stroke-width="1.5" />
+        <text x="100" y="29" text-anchor="middle" class="sans" font-size="12" font-weight="600" fill="#231B15" letter-spacing="1">OUTLINE BUTTON</text>
+        <text x="100" y="66" text-anchor="middle" class="sans" font-size="10" fill="#786C63">Secondary Actions</text>
+      </g>
+
+      <!-- Marketplace Amazon -->
+      <g transform="translate(675, 16)">
+        <rect width="220" height="48" rx="24" fill="#231B15" />
+        <circle cx="28" cy="24" r="10" fill="#FF9900" />
+        <text x="28" y="28" text-anchor="middle" class="sans" font-size="10" font-weight="800" fill="#231B15">a</text>
+        <text x="125" y="29" text-anchor="middle" class="sans" font-size="12" font-weight="700" fill="#FCFBF7">BUY ON AMAZON →</text>
+        <text x="110" y="66" text-anchor="middle" class="sans" font-size="10" fill="#786C63">Marketplace Conversion</text>
+      </g>
+    </g>
+
+    <!-- SECTION: BADGES & PILLS -->
+    <g transform="translate(0, 150)">
+      <text x="0" y="0" class="sans" font-size="13" font-weight="700" fill="#231B15" letter-spacing="1">BADGES, PILLS &amp; TAGS</text>
+      
+      <!-- Brand Pill -->
+      <g transform="translate(0, 16)">
+        <rect width="200" height="28" rx="14" fill="#F4E8C1" stroke="#D9C38F" />
+        <text x="100" y="18" text-anchor="middle" class="sans" font-size="10" font-weight="700" fill="#9A7513" letter-spacing="1">✦ ARTISAN COLLECTION</text>
+      </g>
+
+      <!-- Featured Badge -->
+      <g transform="translate(220, 16)">
+        <rect width="95" height="24" rx="12" fill="#231B15" />
+        <text x="47" y="16" text-anchor="middle" class="sans" font-size="9.5" font-weight="700" fill="#FCFBF7" letter-spacing="1">FEATURED</text>
+      </g>
+
+      <!-- Discount Pill -->
+      <g transform="translate(335, 16)">
+        <rect width="80" height="24" rx="12" fill="#F4E8C1" />
+        <text x="40" y="16" text-anchor="middle" class="sans" font-size="10" font-weight="700" fill="#9A7513">33% OFF</text>
+      </g>
+
+      <!-- In Stock Badge -->
+      <g transform="translate(435, 16)">
+        <rect width="90" height="24" rx="12" fill="#E8F5E9" />
+        <text x="45" y="16" text-anchor="middle" class="sans" font-size="10" font-weight="700" fill="#2E7D32">● IN STOCK</text>
+      </g>
+
+      <!-- Star Rating -->
+      <g transform="translate(545, 16)">
+        <rect width="110" height="24" rx="12" fill="#FFFFFF" stroke="#EAE3D9" />
+        <text x="55" y="16" text-anchor="middle" class="sans" font-size="11" font-weight="700" fill="#231B15">★ 4.9 <tspan font-weight="400" fill="#786C63">(42)</tspan></text>
+      </g>
+    </g>
+
+    <!-- SECTION: FILTER CHIPS -->
+    <g transform="translate(0, 240)">
+      <text x="0" y="0" class="sans" font-size="13" font-weight="700" fill="#231B15" letter-spacing="1">INTERACTIVE FILTER CHIPS (ZOMATO STYLE)</text>
+
+      <!-- Active Chip -->
+      <g transform="translate(0, 16)">
+        <rect width="130" height="38" rx="19" fill="#231B15" />
+        <text x="65" y="24" text-anchor="middle" class="sans" font-size="12" font-weight="600" fill="#FCFBF7">All Candles</text>
+      </g>
+
+      <!-- Inactive Chip -->
+      <g transform="translate(145, 16)">
+        <rect width="145" height="38" rx="19" fill="#FFFFFF" stroke="#EAE3D9" />
+        <text x="72" y="24" text-anchor="middle" class="sans" font-size="12" font-weight="600" fill="#231B15">Teddy Candles</text>
+      </g>
+
+      <!-- Dropdown Filter Chip -->
+      <g transform="translate(305, 16)">
+        <rect width="165" height="38" rx="19" fill="#FFFFFF" stroke="#EAE3D9" />
+        <text x="82" y="24" text-anchor="middle" class="sans" font-size="12" font-weight="500" fill="#231B15">🔍 Fragrance: Oud ▾</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- ==================== 4. GRID SYSTEM & SPACING TOKENS ==================== -->
+  <g id="Grid-Specs" transform="translate(100, 1440)">
+    <text x="0" y="0" class="serif" font-size="28" font-weight="700" fill="#231B15">04. Layout Grid &amp; Elevation Standards</text>
+    <text x="0" y="24" class="sans" font-size="13" fill="#786C63">12-Column Responsive Desktop Grid (1440px max width, 80px margins, 24px gutters)</text>
+
+    <g transform="translate(0, 50)">
+      <rect width="1240" height="240" rx="20" fill="#F6F1EC" stroke="#EAE3D9" />
+      
+      <!-- Elevation Cards -->
+      <g transform="translate(40, 40)">
+        <text x="0" y="0" class="sans" font-size="12" font-weight="700" fill="#231B15">ELEVATION 1 (CARD RESTING)</text>
+        <rect x="0" y="15" width="340" height="120" rx="14" fill="#FFFFFF" stroke="#EAE3D9" class="card-shadow" />
+        <text x="24" y="55" class="sans" font-size="12" font-weight="600" fill="#231B15">Subtle Warm Ambient Shadow</text>
+        <text x="24" y="80" class="sans" font-size="10.5" fill="#786C63">0 4px 20px -2px rgba(45,33,23,0.05)</text>
+        <text x="24" y="100" class="sans" font-size="10.5" fill="#786C63">Border: 1px solid #EAE3D9</text>
+      </g>
+
+      <g transform="translate(440, 40)">
+        <text x="0" y="0" class="sans" font-size="12" font-weight="700" fill="#231B15">ELEVATION 2 (CARD HOVER)</text>
+        <rect x="0" y="15" width="340" height="120" rx="14" fill="#FFFFFF" stroke="#DECDBA" filter="drop-shadow(0 12px 32px rgba(45,33,23,0.12))" />
+        <text x="24" y="55" class="sans" font-size="12" font-weight="600" fill="#231B15">Prominent Float Shadow</text>
+        <text x="24" y="80" class="sans" font-size="10.5" fill="#786C63">0 12px 32px -4px rgba(45,33,23,0.1)</text>
+        <text x="24" y="100" class="sans" font-size="10.5" fill="#786C63">Transition: all 0.3s cubic-bezier</text>
+      </g>
+
+      <g transform="translate(840, 40)">
+        <text x="0" y="0" class="sans" font-size="12" font-weight="700" fill="#231B15">ELEVATION 3 (MODAL / OVERLAY)</text>
+        <rect x="0" y="15" width="340" height="120" rx="14" fill="#FFFFFF" filter="drop-shadow(0 24px 48px rgba(45,33,23,0.2))" />
+        <text x="24" y="55" class="sans" font-size="12" font-weight="600" fill="#231B15">Modal Focus Shadow</text>
+        <text x="24" y="80" class="sans" font-size="10.5" fill="#786C63">0 24px 48px -12px rgba(45,33,23,0.2)</text>
+        <text x="24" y="100" class="sans" font-size="10.5" fill="#786C63">Backdrop: rgba(35,27,21,0.6)</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- ==================== FOOTER ==================== -->
+  <g id="Footer" transform="translate(0, 1840)">
+    <rect width="1440" height="310" fill="#231B15" />
+    <g transform="translate(100, 60)">
+      <text x="0" y="24" class="serif" font-size="24" font-weight="700" fill="#FCFBF7" letter-spacing="2">LIVE LOVE LIGHT</text>
+      <text x="0" y="44" class="sans" font-size="10" font-weight="600" fill="#DFBE58" letter-spacing="2">DESIGN SPECIFICATION COMPLETE • READY FOR FIGMA IMPORT</text>
+      <text x="0" y="80" class="sans" font-size="12" fill="#9D938B">
+        Drag and drop any SVG screen from the figma/screens/ folder directly into your Figma workspace to edit all vector shapes, colors, and typography.
+      </text>
+      <line x1="0" y1="130" x2="1240" y2="130" stroke="#3D3027" stroke-width="1" />
+      <text x="0" y="170" class="sans" font-size="11" fill="#786C63">
+        © 2026 Live Love Light Master Design Kit. Built for pair-programming and client handoff.
+      </text>
+    </g>
+  </g>
+</svg>
