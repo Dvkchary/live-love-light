@@ -3,21 +3,21 @@ import { Product } from '@/types';
 export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'teddy-candle-001',
-    name: 'Teddy Candle — Royal Oud',
+    name: 'Teddy Candle — Royal Oud (Set of 2)',
     slug: 'teddy-candle-royal-oud',
-    description: 'An adorable, delicately hand-carved teddy bear candle sculpted in 100% botanical soy wax and infused with deep, velvety royal oud and cozy amber notes. Perfect as a heartwarming keepsake or luxury gift.',
+    description: 'An adorable, delicately hand-carved teddy bear candle sculpted in 100% botanical soy wax and infused with deep, velvety royal oud and cozy amber notes. Comes as a set of 2. Perfect as a heartwarming keepsake or luxury gift.',
     fragrance: 'Royal Oud & Cozy Amber',
     fragranceNotes: {
       top: 'Sweet Bergamot, Warm Cardamom',
       middle: 'Smoky Agarwood (Oud), Cedar',
       base: 'Velvet Amber, Madagascar Vanilla'
     },
-    price: 399,
-    originalPrice: 599,
+    price: 200,
+    originalPrice: 399,
     currency: 'INR',
     category: 'Teddy Candles',
     images: [
-      '/images/teddy - Royal oud.jpeg'
+      '/images/teddy - Royal oud-set of 2 -200.jpeg'
     ],
     marketplaces: {
       amazon: 'https://www.amazon.in/dp/example-teddy-candle',
@@ -36,21 +36,21 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'daisy-jasmine-002',
-    name: 'Daisy Flower Candle — Blooming Jasmine',
+    name: 'Daisy Jar Candle — Blooming Jasmine',
     slug: 'daisy-flower-candle-jasmine',
-    description: 'A delicately sculpted floral daisy candle infused with pure sweet blooming jasmine fragrance. Hand-carved petal by petal, bringing springtime freshness into your living space.',
+    description: 'A delicately sculpted floral daisy jar candle infused with pure sweet blooming jasmine fragrance. Hand-carved petal by petal, bringing springtime freshness into your living space.',
     fragrance: 'Blooming Jasmine',
     fragranceNotes: {
       top: 'Dewy Greens, Wild Citrus Blossom',
       middle: 'Night Blooming Jasmine, White Lily',
       base: 'Soft White Musk, Sheer Wood'
     },
-    price: 349,
+    price: 299,
     originalPrice: 499,
     currency: 'INR',
     category: 'Flower Candles',
     images: [
-      '/images/daisy - jasmine.jpeg'
+      '/images/daisy - jasmine-299 jar candle.jpeg'
     ],
     marketplaces: {
       amazon: 'https://www.amazon.in/dp/example-daisy-jasmine',
@@ -68,22 +68,55 @@ export const INITIAL_PRODUCTS: Product[] = [
     updatedAt: '2026-01-12T10:00:00Z'
   },
   {
+    id: 'flower-candle-006',
+    name: 'Flower Candle — Artisan Bloom',
+    slug: 'flower-candle-artisan-bloom',
+    description: 'A beautifully hand-crafted artisan flower candle made with 100% botanical soy wax. Delicately shaped petals that glow warmly when lit, making it a stunning centrepiece for any setting.',
+    fragrance: 'Fresh Blooms',
+    fragranceNotes: {
+      top: 'Spring Petals, Green Leaves',
+      middle: 'Tuberose, White Floral',
+      base: 'Soft Musk, Warm Cedar'
+    },
+    price: 200,
+    originalPrice: 349,
+    currency: 'INR',
+    category: 'Flower Candles',
+    images: [
+      '/images/flower candle 200.jpeg'
+    ],
+    marketplaces: {
+      amazon: 'https://www.amazon.in/dp/example-flower-candle',
+      flipkart: 'https://www.flipkart.com/example-flower-candle',
+      meesho: 'https://www.meesho.com/example-flower-candle'
+    },
+    featured: false,
+    active: true,
+    inStock: true,
+    burnTimeHours: 35,
+    waxType: '100% Botanical Soy Wax',
+    weightGrams: 160,
+    dimensions: '8 x 8 x 5 cm',
+    createdAt: '2026-01-22T10:00:00Z',
+    updatedAt: '2026-01-22T10:00:00Z'
+  },
+  {
     id: 'peony-rose-003',
-    name: 'Peony Rose Candle — Velvet Rose & Royal Oud',
+    name: 'Peony Rose Candle — Jasmine & Royal Oud (Couple Set)',
     slug: 'peony-rose-candle-jasmine-oud',
-    description: 'An exquisite multi-layered sculpted peony flower candle blending romantic crimson rose petals with prestigious warm royal oud. Designed to cast a romantic glow across intimate evenings.',
-    fragrance: 'Velvet Rose & Royal Oud',
+    description: 'An exquisite couple set of multi-layered sculpted peony flower candles blending romantic jasmine with prestigious warm royal oud. Designed to cast a romantic glow across intimate evenings. Perfect as a couples gift.',
+    fragrance: 'Jasmine & Royal Oud',
     fragranceNotes: {
       top: 'Damask Rose Petals, Pink Peppercorn',
       middle: 'Velvety Peony, Night Jasmine',
       base: 'Dark Smoky Royal Oud, Warm Praline'
     },
-    price: 449,
+    price: 400,
     originalPrice: 649,
     currency: 'INR',
     category: 'Rose Candles',
     images: [
-      '/images/peony - jamsine & Royal oud.jpeg'
+      '/images/peony - jamsine & Royal oud- couple 400.jpeg'
     ],
     marketplaces: {
       amazon: 'https://www.amazon.in/dp/example-peony-rose',
@@ -102,21 +135,21 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'lotus-sandalwood-004',
-    name: 'Lotus Flower Candle — Mysore Sandalwood',
+    name: 'Lotus Flower Candle — Mysore Sandalwood (Pack of 4)',
     slug: 'lotus-flower-candle-sandalwood',
-    description: 'A serenely sculpted blooming sacred lotus candle infused with authentic Mysore sandalwood aroma. Perfect for meditation, yoga nooks, mindful evenings, and peaceful relaxation.',
+    description: 'A serenely sculpted blooming sacred lotus candle infused with authentic Mysore sandalwood aroma. Comes in a pack of 4. Perfect for meditation, yoga nooks, mindful evenings, and peaceful relaxation.',
     fragrance: 'Mysore Sandalwood & Sacred Amber',
     fragranceNotes: {
       top: 'Crisp Cardamom, Golden Saffron',
       middle: 'Calming Mysore Sandalwood, Frankincense',
       base: 'Earthy Patchouli, Sacred Amber'
     },
-    price: 379,
-    originalPrice: 549,
+    price: 200,
+    originalPrice: 399,
     currency: 'INR',
     category: 'Flower Candles',
     images: [
-      '/images/lotus - sandlewood.jpeg'
+      '/images/lotus - sandlewood-pack of 4 -200.jpeg'
     ],
     marketplaces: {
       amazon: 'https://www.amazon.in/dp/example-lotus-candle',
@@ -144,12 +177,12 @@ export const INITIAL_PRODUCTS: Product[] = [
       middle: 'Royal Arabian Oud, Dark Birch',
       base: 'Leather Accord, Golden Amber, Vetiver'
     },
-    price: 549,
-    originalPrice: 799,
+    price: 200,
+    originalPrice: 399,
     currency: 'INR',
     category: 'Fragrance Candles',
     images: [
-      '/images/jar - rayal oud.jpeg'
+      '/images/jar - rayal oud-200.jpeg'
     ],
     marketplaces: {
       amazon: 'https://www.amazon.in/dp/example-amber-jar-oud',
