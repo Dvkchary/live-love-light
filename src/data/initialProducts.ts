@@ -19,11 +19,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     images: [
       '/images/teddy - Royal oud-set of 2 -200.jpeg'
     ],
-    marketplaces: {
-      amazon: 'https://www.amazon.in/dp/example-teddy-candle',
-      flipkart: 'https://www.flipkart.com/example-teddy-candle',
-      meesho: 'https://www.meesho.com/example-teddy-candle'
-    },
+    marketplaces: {},
     featured: true,
     active: true,
     inStock: true,
@@ -52,11 +48,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     images: [
       '/images/daisy - jasmine-299 jar candle.jpeg'
     ],
-    marketplaces: {
-      amazon: 'https://www.amazon.in/dp/example-daisy-jasmine',
-      flipkart: 'https://www.flipkart.com/example-daisy-jasmine',
-      meesho: ''
-    },
+    marketplaces: {},
     featured: true,
     active: true,
     inStock: true,
@@ -85,11 +77,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     images: [
       '/images/flower candle 200.jpeg'
     ],
-    marketplaces: {
-      amazon: 'https://www.amazon.in/dp/example-flower-candle',
-      flipkart: 'https://www.flipkart.com/example-flower-candle',
-      meesho: 'https://www.meesho.com/example-flower-candle'
-    },
+    marketplaces: {},
     featured: false,
     active: true,
     inStock: true,
@@ -118,11 +106,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     images: [
       '/images/peony - jamsine & Royal oud- couple 400.jpeg'
     ],
-    marketplaces: {
-      amazon: 'https://www.amazon.in/dp/example-peony-rose',
-      flipkart: '',
-      meesho: 'https://www.meesho.com/example-peony-rose'
-    },
+    marketplaces: {},
     featured: true,
     active: true,
     inStock: true,
@@ -151,11 +135,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     images: [
       '/images/lotus - sandlewood-pack of 4 -200.jpeg'
     ],
-    marketplaces: {
-      amazon: 'https://www.amazon.in/dp/example-lotus-candle',
-      flipkart: 'https://www.flipkart.com/example-lotus-candle',
-      meesho: 'https://www.meesho.com/example-lotus-candle'
-    },
+    marketplaces: {},
     featured: false,
     active: true,
     inStock: true,
@@ -184,11 +164,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     images: [
       '/images/jar - rayal oud-200.jpeg'
     ],
-    marketplaces: {
-      amazon: 'https://www.amazon.in/dp/example-amber-jar-oud',
-      flipkart: 'https://www.flipkart.com/example-amber-jar-oud',
-      meesho: ''
-    },
+    marketplaces: {},
     featured: true,
     active: true,
     inStock: true,
@@ -216,8 +192,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     currency: 'INR',
     category: 'Flower Candles',
     images: [
-      'https://images.meesho.com/images/products/s-1123997239/1_512.webp',
-      'https://images.meesho.com/images/products/s-1123997239/2_512.webp'
+      '/images/meesho-daisy-flowers.jpg'
     ],
     marketplaces: {
       meesho: 'https://meesho.com/daisy-flowers-candlescented-candle/p/il75tj'
@@ -248,8 +223,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     currency: 'INR',
     category: 'Rose Candles',
     images: [
-      'https://images.meesho.com/images/products/s-1126216473/1_512.webp',
-      'https://images.meesho.com/images/products/s-1126216473/2_512.webp'
+      '/images/meesho-hand-in-hand.jpg'
     ],
     marketplaces: {
       meesho: 'https://meesho.com/hand-in-hand-scented-candles-pack-of-1/p/imiq6x'
@@ -280,9 +254,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     currency: 'INR',
     category: 'Flower Candles',
     images: [
-      'https://images.meesho.com/images/products/s-1124177911/1_512.webp',
-      'https://images.meesho.com/images/products/s-1124177911/2_512.webp',
-      'https://images.meesho.com/images/products/s-1124177911/3_512.webp'
+      '/images/meesho-lotus-fragrance.jpg'
     ],
     marketplaces: {
       meesho: 'https://meesho.com/lotus-fragrance-candles/p/ilb187'
@@ -313,9 +285,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     currency: 'INR',
     category: 'Teddy Candles',
     images: [
-      'https://images.meesho.com/images/products/s-1124241244/1_512.webp',
-      'https://images.meesho.com/images/products/s-1124241244/2_512.webp',
-      'https://images.meesho.com/images/products/s-1124241244/3_512.webp'
+      '/images/meesho-teddy-premium.jpg'
     ],
     marketplaces: {
       meesho: 'https://meesho.com/teddy-premium-scented-candles-pack-of-2/p/ilce3g'
@@ -346,8 +316,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     currency: 'INR',
     category: 'Decorative Candles',
     images: [
-      'https://images.meesho.com/images/products/s-1124291666/1_512.webp',
-      'https://images.meesho.com/images/products/s-1124291666/2_512.webp'
+      '/images/meesho-mini-heart.jpg'
     ],
     marketplaces: {
       meesho: 'https://meesho.com/mini-heart-scented-candles-set-of-5/p/ildh02'

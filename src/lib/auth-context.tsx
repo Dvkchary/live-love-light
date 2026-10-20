@@ -58,7 +58,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const rawRole = (clerkUser.publicMetadata as { role?: string })?.role;
     let computedRole: UserRole = 'user';
 
-    if (rawRole === 'super_admin') {
+    const superAdminEnv = process.env.NEXT_PUBLIC_SUPER_ADMIN_CLERK_ID || '';
+    const superAdminIds = superAdminEnv.split(',').map(s => s.trim()).filter(Boolean);
+    superAdminIds.push('user_3KoJSKsibmvnXr6GHtrV0QC3TYa', 'user_3KoN3Nwwtai7ZGXslEv7iaAgYFt');
+
+    if (superAdminIds.includes(clerkUser.id) || rawRole === 'super_admin') {
       computedRole = 'super_admin';
     } else if (rawRole === 'admin' || rawRole === 'product_manager') {
       computedRole = 'admin';
@@ -67,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const metadataDisplayName = (clerkUser.publicMetadata as { displayName?: string })?.displayName;
     const designatedDisplayName =
       computedRole === 'super_admin'
-        ? 'Live Love Light Owner'
+        ? 'Live Love Light Super Admin'
         : computedRole === 'admin'
         ? 'Live Love Light Admin'
         : undefined;

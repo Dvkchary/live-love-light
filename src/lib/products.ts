@@ -13,8 +13,8 @@ import {
   QueryDocumentSnapshot
 } from 'firebase/firestore';
 
-const STORAGE_KEY_PRODUCTS = 'lll_products_v3';
-const STORAGE_KEY_CATEGORIES = 'lll_categories_v3';
+const STORAGE_KEY_PRODUCTS = 'lll_products_v4';
+const STORAGE_KEY_CATEGORIES = 'lll_categories_v4';
 
 // In-memory cache for fast SSR / hydration
 let memoryProducts: Product[] = [...INITIAL_PRODUCTS];
@@ -26,22 +26,30 @@ export function getLocalProducts(): Product[] {
     const raw = localStorage.getItem(STORAGE_KEY_PRODUCTS);
     if (raw) {
       const parsed: Product[] = JSON.parse(raw);
-      // If legacy images (like .png or old filenames without price suffix) are present, refresh
-      const OLD_IMAGE_PATHS = [
-        '/images/teddy - Royal oud.jpeg',
-        '/images/daisy - jasmine.jpeg',
-        '/images/peony - jamsine & Royal oud.jpeg',
-        '/images/lotus - sandlewood.jpeg',
-        '/images/jar - rayal oud.jpeg',
-      ];
-      const hasOldImages = parsed.some(p =>
-        p.images?.some(img => img.includes('.png') || OLD_IMAGE_PATHS.includes(img))
-      );
-      // Also refresh if any product from INITIAL_PRODUCTS is missing (e.g. new flower candle)
-      const hasAllProducts = INITIAL_PRODUCTS.every(ip => parsed.some(p => p.id === ip.id));
-      if (Array.isArray(parsed) && parsed.length > 0 && !hasOldImages && hasAllProducts) {
-        memoryProducts = parsed;
-        return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Merge in any missing products from INITIAL_PRODUCTS without overriding user modifications
+        const merged = [...parsed];
+        for (const initial of INITIAL_PRODUCTS) {
+          const existingIdx = merged.findIndex(p => p.id === initial.id);
+          if (existingIdx === -1) {
+            merged.push(initial);
+          } else {
+            // If an existing product still has un-loadable external meesho webp images, upgrade to local image
+            if (merged[existingIdx].images?.some(img => img.includes('images.meesho.com'))) {
+              merged[existingIdx] = {
+                ...merged[existingIdx],
+                images: initial.images,
+                marketplaces: {
+                  ...initial.marketplaces,
+                  ...merged[existingIdx].marketplaces,
+                }
+              };
+            }
+          }
+        }
+        memoryProducts = merged;
+        localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(merged));
+        return merged;
       }
     }
     // initialize local storage with default given products

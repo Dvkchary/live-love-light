@@ -347,10 +347,20 @@ export default function AdminPage({ initialTab = 'products' }: { initialTab?: Ad
     setIsModalOpen(true);
   };
 
+  const normalizeUrl = (url: string): string => {
+    const trimmed = url.trim();
+    if (!trimmed) return '';
+    if (!/^https?:\/\//i.test(trimmed)) {
+      return `https://${trimmed}`;
+    }
+    return trimmed;
+  };
+
   const validateUrl = (url: string): boolean => {
-    if (!url.trim()) return true; // optional
+    const normalized = normalizeUrl(url);
+    if (!normalized) return true; // optional
     try {
-      const parsed = new URL(url);
+      const parsed = new URL(normalized);
       return parsed.protocol === 'http:' || parsed.protocol === 'https:';
     } catch {
       return false;
@@ -373,16 +383,21 @@ export default function AdminPage({ initialTab = 'products' }: { initialTab?: Ad
       setFormError('Price must be greater than zero.');
       return;
     }
-    if (formAmazonUrl && !validateUrl(formAmazonUrl)) {
-      setFormError('Invalid Amazon URL. Must begin with https://');
+
+    const cleanAmazonUrl = normalizeUrl(formAmazonUrl);
+    const cleanFlipkartUrl = normalizeUrl(formFlipkartUrl);
+    const cleanMeeshoUrl = normalizeUrl(formMeeshoUrl);
+
+    if (cleanAmazonUrl && !validateUrl(cleanAmazonUrl)) {
+      setFormError('Invalid Amazon URL. Please enter a valid web link.');
       return;
     }
-    if (formFlipkartUrl && !validateUrl(formFlipkartUrl)) {
-      setFormError('Invalid Flipkart URL. Must begin with https://');
+    if (cleanFlipkartUrl && !validateUrl(cleanFlipkartUrl)) {
+      setFormError('Invalid Flipkart URL. Please enter a valid web link.');
       return;
     }
-    if (formMeeshoUrl && !validateUrl(formMeeshoUrl)) {
-      setFormError('Invalid Meesho URL. Must begin with https://');
+    if (cleanMeeshoUrl && !validateUrl(cleanMeeshoUrl)) {
+      setFormError('Invalid Meesho URL. Please enter a valid web link.');
       return;
     }
 
@@ -410,9 +425,9 @@ export default function AdminPage({ initialTab = 'products' }: { initialTab?: Ad
       category: formCategory,
       images: imageArray.length > 0 ? imageArray : ['/images/logo.jpeg'],
       marketplaces: {
-        amazon: formAmazonUrl.trim() || undefined,
-        flipkart: formFlipkartUrl.trim() || undefined,
-        meesho: formMeeshoUrl.trim() || undefined,
+        amazon: cleanAmazonUrl || undefined,
+        flipkart: cleanFlipkartUrl || undefined,
+        meesho: cleanMeeshoUrl || undefined,
       },
       featured: formFeatured,
       active: formActive,
@@ -1389,111 +1404,166 @@ export default function AdminPage({ initialTab = 'products' }: { initialTab?: Ad
                   </div>
                 </div>
 
-                {/* Images */}
-                <div>
-                  <label className="block font-semibold text-[#231B15] mb-1">
-                    Image URLs (Comma separated)
-                  </label>
-                  <input
-                    type="text"
-                    value={formImages}
-                    onChange={e => setFormImages(e.target.value)}
-                    placeholder="/images/teddy - Royal oud.jpeg"
-                    className="w-full bg-white text-sm text-[#231B15] p-2.5 rounded-xl border border-[#EAE3D9]"
-                  />
-                  <p className="text-[10px] text-[#786C63] mt-1">
-                    Available authentic assets: /images/teddy - Royal oud.jpeg, /images/daisy - jasmine.jpeg, /images/lotus - sandlewood.jpeg, /images/peony - jamsine & Royal oud.jpeg, /images/jar - rayal oud.jpeg, /images/logo.jpeg
-                  </p>
+                {/* Enhanced Image Manager */}
+                <div className="p-4 bg-white rounded-2xl border border-[#EAE3D9] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="font-bold text-sm text-[#231B15] flex items-center gap-1.5">
+                      <Flame className="w-4 h-4 text-[#C59B27]" />
+                      Product Images
+                    </label>
+                    <span className="text-[11px] text-[#786C63]">
+                      Primary image is shown first in catalogue
+                    </span>
+                  </div>
+
+                  {/* Thumbnail Previews of currently selected images */}
+                  <div className="flex flex-wrap gap-2.5 items-center pt-1">
+                    {formImages
+                      .split(',')
+                      .map(s => s.trim())
+                      .filter(Boolean)
+                      .map((imgUrl, idx) => (
+                        <div key={`${imgUrl}-${idx}`} className="relative group w-20 h-20 rounded-xl overflow-hidden border border-[#EAE3D9] bg-[#F6F1EC] shadow-xs">
+                          <Image
+                            src={imgUrl}
+                            alt={`Preview ${idx + 1}`}
+                            fill
+                            sizes="80px"
+                            className="object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const imgs = formImages.split(',').map(s => s.trim()).filter(Boolean);
+                              imgs.splice(idx, 1);
+                              setFormImages(imgs.join(', '));
+                            }}
+                            className="absolute top-1 right-1 bg-red-600/90 hover:bg-red-700 text-white p-1 rounded-full opacity-80 group-hover:opacity-100 transition-opacity"
+                            title="Remove image"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                          <span className="absolute bottom-1 left-1 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.2 rounded">
+                            #{idx + 1}
+                          </span>
+                        </div>
+                      ))}
+                    {formImages.split(',').map(s => s.trim()).filter(Boolean).length === 0 && (
+                      <p className="text-xs text-[#786C63] italic">No images selected yet. Please enter or select an image below.</p>
+                    )}
+                  </div>
+
+                  {/* Direct input for Image URLs */}
+                  <div>
+                    <label className="block text-xs font-semibold text-[#786C63] mb-1">
+                      Image URLs (comma-separated, local path or web URL)
+                    </label>
+                    <input
+                      type="text"
+                      value={formImages}
+                      onChange={e => setFormImages(e.target.value)}
+                      placeholder="/images/meesho-daisy-flowers.jpg"
+                      className="w-full bg-[#FCFBF7] text-xs text-[#231B15] p-2.5 rounded-xl border border-[#EAE3D9] focus:outline-none focus:border-[#C59B27]"
+                    />
+                  </div>
+
+                  {/* Quick-add presets */}
+                  <div className="pt-1">
+                    <p className="text-[11px] font-semibold text-[#786C63] mb-1.5">
+                      Quick Add Verified Catalogue Images:
+                    </p>
+                    <div className="flex flex-wrap gap-1.5 text-[11px]">
+                      {[
+                        { label: 'Daisy Flowers', path: '/images/meesho-daisy-flowers.jpg' },
+                        { label: 'Hand in Hand', path: '/images/meesho-hand-in-hand.jpg' },
+                        { label: 'Lotus Fragrance', path: '/images/meesho-lotus-fragrance.jpg' },
+                        { label: 'Teddy Bears (Pack of 2)', path: '/images/meesho-teddy-premium.jpg' },
+                        { label: 'Mini Heart (Set of 5)', path: '/images/meesho-mini-heart.jpg' },
+                        { label: 'Royal Oud Teddy Set', path: '/images/teddy - Royal oud-set of 2 -200.jpeg' },
+                        { label: 'Daisy Jasmine Jar', path: '/images/daisy - jasmine-299 jar candle.jpeg' },
+                        { label: 'Artisan Bloom Flower', path: '/images/flower candle 200.jpeg' },
+                        { label: 'Peony Rose Couple', path: '/images/peony - jamsine & Royal oud- couple 400.jpeg' },
+                        { label: 'Lotus Sandalwood (Pack 4)', path: '/images/lotus - sandlewood-pack of 4 -200.jpeg' },
+                        { label: 'Amber Jar Oud', path: '/images/jar - rayal oud-200.jpeg' },
+                      ].map(preset => (
+                        <button
+                          key={preset.path}
+                          type="button"
+                          onClick={() => {
+                            const current = formImages.split(',').map(s => s.trim()).filter(Boolean);
+                            if (!current.includes(preset.path)) {
+                              setFormImages(current.length > 0 ? `${current.join(', ')}, ${preset.path}` : preset.path);
+                            }
+                          }}
+                          className="px-2 py-1 rounded-lg bg-[#F6F1EC] hover:bg-[#EAE3D9] text-[#231B15] text-[10px] font-medium border border-[#EAE3D9] transition-colors"
+                        >
+                          + {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
-                {/* Marketplace URLs are visible only to Super Admins. */}
-                {isSuperAdminRole && (
+                {/* Marketplace Purchasing Links */}
                 <div className="p-4 bg-white rounded-2xl border border-[#EAE3D9] space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="font-bold text-sm text-[#231B15] flex items-center gap-1.5">
                       <ShoppingBag className="w-4 h-4 text-[#C59B27]" />
                       Marketplace Purchasing Links
                     </h4>
-                    {!isSuperAdminRole && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200">
-                        <Lock className="w-3 h-3 text-amber-600" />
-                        Super Admin Only
-                      </span>
-                    )}
+                    <span className="text-[11px] text-[#786C63] font-medium">
+                      Amazon • Flipkart • Meesho
+                    </span>
                   </div>
-                  {!isSuperAdminRole ? (
-                    <div className="p-3 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 leading-relaxed flex items-start gap-2">
-                      <Lock className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-                      <div>
-                        <strong>Read-Only for Product Managers:</strong> Marketplace destination links (Amazon, Flipkart, Meesho) are restricted to Super Administrators. Existing destination URLs will be preserved upon saving.
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-[11px] text-[#786C63]">
-                      Only platforms with valid configured URLs will display purchase buttons on the product page.
-                    </p>
-                  )}
+
+                  <p className="text-[11px] text-[#786C63]">
+                    Configure destination product links. Platforms with valid URLs will display direct purchase buttons on the product page.
+                  </p>
 
                   <div className="space-y-3 pt-1">
                     <div>
                       <label className="block font-semibold text-[#231B15] mb-1 flex items-center justify-between">
                         <span>Amazon Product URL</span>
-                        {!isSuperAdminRole && <span className="text-[10px] text-[#786C63] font-normal">Protected</span>}
+                        <span className="text-[10px] text-[#FF9900] font-bold">Amazon India</span>
                       </label>
                       <input
                         type="url"
-                        disabled={!isSuperAdminRole}
                         value={formAmazonUrl}
                         onChange={e => setFormAmazonUrl(e.target.value)}
-                        placeholder={isSuperAdminRole ? "https://www.amazon.in/dp/..." : "(Restricted to Super Admin)"}
-                        className={`w-full text-xs p-2.5 rounded-xl border border-[#EAE3D9] ${
-                          isSuperAdminRole
-                            ? 'bg-[#FCFBF7] text-[#231B15] focus:outline-none focus:border-[#C59B27]'
-                            : 'bg-[#F6F1EC] text-[#786C63] cursor-not-allowed opacity-80'
-                        }`}
+                        placeholder="https://www.amazon.in/dp/..."
+                        className="w-full text-xs p-2.5 rounded-xl border border-[#EAE3D9] bg-[#FCFBF7] text-[#231B15] focus:outline-none focus:border-[#C59B27]"
                       />
                     </div>
 
                     <div>
                       <label className="block font-semibold text-[#231B15] mb-1 flex items-center justify-between">
                         <span>Flipkart Product URL</span>
-                        {!isSuperAdminRole && <span className="text-[10px] text-[#786C63] font-normal">Protected</span>}
+                        <span className="text-[10px] text-[#2874F0] font-bold">Flipkart Assured</span>
                       </label>
                       <input
                         type="url"
-                        disabled={!isSuperAdminRole}
                         value={formFlipkartUrl}
                         onChange={e => setFormFlipkartUrl(e.target.value)}
-                        placeholder={isSuperAdminRole ? "https://www.flipkart.com/..." : "(Restricted to Super Admin)"}
-                        className={`w-full text-xs p-2.5 rounded-xl border border-[#EAE3D9] ${
-                          isSuperAdminRole
-                            ? 'bg-[#FCFBF7] text-[#231B15] focus:outline-none focus:border-[#C59B27]'
-                            : 'bg-[#F6F1EC] text-[#786C63] cursor-not-allowed opacity-80'
-                        }`}
+                        placeholder="https://www.flipkart.com/..."
+                        className="w-full text-xs p-2.5 rounded-xl border border-[#EAE3D9] bg-[#FCFBF7] text-[#231B15] focus:outline-none focus:border-[#C59B27]"
                       />
                     </div>
 
                     <div>
                       <label className="block font-semibold text-[#231B15] mb-1 flex items-center justify-between">
                         <span>Meesho Product URL</span>
-                        {!isSuperAdminRole && <span className="text-[10px] text-[#786C63] font-normal">Protected</span>}
+                        <span className="text-[10px] text-[#E02076] font-bold">Meesho Craft</span>
                       </label>
                       <input
                         type="url"
-                        disabled={!isSuperAdminRole}
                         value={formMeeshoUrl}
                         onChange={e => setFormMeeshoUrl(e.target.value)}
-                        placeholder={isSuperAdminRole ? "https://www.meesho.com/..." : "(Restricted to Super Admin)"}
-                        className={`w-full text-xs p-2.5 rounded-xl border border-[#EAE3D9] ${
-                          isSuperAdminRole
-                            ? 'bg-[#FCFBF7] text-[#231B15] focus:outline-none focus:border-[#C59B27]'
-                            : 'bg-[#F6F1EC] text-[#786C63] cursor-not-allowed opacity-80'
-                        }`}
+                        placeholder="https://www.meesho.com/..."
+                        className="w-full text-xs p-2.5 rounded-xl border border-[#EAE3D9] bg-[#FCFBF7] text-[#231B15] focus:outline-none focus:border-[#C59B27]"
                       />
                     </div>
                   </div>
                 </div>
-                )}
 
                 {/* Flags: Featured, In Stock, Active */}
                 <div className="flex flex-wrap items-center gap-6 pt-2">

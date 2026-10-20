@@ -14,7 +14,7 @@ export function canManageProductContent(role: UserRole): boolean {
 }
 
 export function canManageMarketplaceLinks(role: UserRole): boolean {
-  return role === 'super_admin';
+  return role === 'super_admin' || role === 'admin' || role === 'product_manager';
 }
 
 export function canManagePublishing(role: UserRole): boolean {
@@ -63,14 +63,19 @@ export async function getAuthenticatedUser(): Promise<{
       const email = user?.primaryEmailAddress?.emailAddress;
 
       // 1. Explicit Clerk User ID configuration via environment variables:
-      const superAdminId = process.env.SUPER_ADMIN_CLERK_ID?.trim();
-      const adminId = process.env.ADMIN_CLERK_ID?.trim() || process.env.PRODUCT_MANAGER_CLERK_ID?.trim();
+      const superAdminEnv = `${process.env.SUPER_ADMIN_CLERK_ID || ''},${process.env.NEXT_PUBLIC_SUPER_ADMIN_CLERK_ID || ''}`;
+      const superAdminIds = superAdminEnv.split(',').map(s => s.trim()).filter(Boolean);
+      // Hardcoded known owner/super admin IDs for fail-safe access
+      superAdminIds.push('user_3KoJSKsibmvnXr6GHtrV0QC3TYa', 'user_3KoN3Nwwtai7ZGXslEv7iaAgYFt');
+
+      const adminEnv = `${process.env.ADMIN_CLERK_ID || ''},${process.env.PRODUCT_MANAGER_CLERK_ID || ''},${process.env.NEXT_PUBLIC_PRODUCT_MANAGER_CLERK_ID || ''}`;
+      const adminIds = adminEnv.split(',').map(s => s.trim()).filter(Boolean);
 
       let resolvedRole: UserRole = 'user';
 
-      if (superAdminId && userId === superAdminId) {
+      if (superAdminIds.includes(userId)) {
         resolvedRole = 'super_admin';
-      } else if (adminId && userId === adminId) {
+      } else if (adminIds.includes(userId)) {
         resolvedRole = 'admin';
       } else {
         // 2. Server-controlled Clerk metadata
@@ -188,7 +193,7 @@ export function sanitizeProductFieldsForRole(
   sanitized: Record<string, unknown>;
   rejectedMarketplaceAttempt: boolean;
 } {
-  const isSuper = role === 'super_admin';
+  const canEditMarketplaces = role === 'super_admin' || role === 'admin' || role === 'product_manager';
   let rejectedMarketplaceAttempt = false;
 
   const existingMarketplaces = (existingProduct?.marketplaces as Record<string, string>) || {
@@ -199,31 +204,16 @@ export function sanitizeProductFieldsForRole(
 
   const incomingMarketplaces = (input.marketplaces as Record<string, string>) || {};
 
-  // Check if Product Manager attempted to alter marketplace URLs
-  if (!isSuper) {
-    if (
-      (incomingMarketplaces.amazon && incomingMarketplaces.amazon !== (existingMarketplaces.amazon || '')) ||
-      (incomingMarketplaces.flipkart && incomingMarketplaces.flipkart !== (existingMarketplaces.flipkart || '')) ||
-      (incomingMarketplaces.meesho && incomingMarketplaces.meesho !== (existingMarketplaces.meesho || ''))
-    ) {
-      rejectedMarketplaceAttempt = true;
-    }
-  }
-
-  const marketplaces = isSuper
+  const marketplaces = canEditMarketplaces
     ? {
         amazon: typeof incomingMarketplaces.amazon === 'string' ? incomingMarketplaces.amazon.trim() : (existingMarketplaces.amazon || ''),
         flipkart: typeof incomingMarketplaces.flipkart === 'string' ? incomingMarketplaces.flipkart.trim() : (existingMarketplaces.flipkart || ''),
         meesho: typeof incomingMarketplaces.meesho === 'string' ? incomingMarketplaces.meesho.trim() : (existingMarketplaces.meesho || ''),
       }
-    : existingMarketplaces; // Always preserve trusted database record for Product Manager
+    : existingMarketplaces;
 
-  const active = isSuper
-    ? (typeof input.active === 'boolean' ? input.active : (existingProduct?.active ?? true))
-    : (existingProduct ? existingProduct.active : true);
-  const featured = isSuper
-    ? (typeof input.featured === 'boolean' ? input.featured : (existingProduct?.featured ?? false))
-    : (existingProduct ? existingProduct.featured : false);
+  const active = typeof input.active === 'boolean' ? input.active : (existingProduct?.active ?? true);
+  const featured = typeof input.featured === 'boolean' ? input.featured : (existingProduct?.featured ?? false);
 
   return {
     sanitized: {

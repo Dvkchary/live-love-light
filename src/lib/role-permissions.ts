@@ -121,7 +121,7 @@ export function sanitizeProductFieldsForRole(
     isCreate = !existingProduct;
   }
 
-  const isSuper = role === 'super_admin';
+  const canManageMarketplaces = role === 'super_admin' || role === 'admin' || role === 'product_manager';
   const canPublish = role === 'super_admin' || role === 'admin' || role === 'product_manager';
   let rejectedMarketplaceAttempt = false;
 
@@ -137,36 +137,20 @@ export function sanitizeProductFieldsForRole(
     meesho: (input.meesho_url as string) || '',
   };
 
-  // Check if Product Manager attempted to alter marketplace URLs
-  if (!isSuper) {
-    if (
-      (incomingMarketplaces.amazon && incomingMarketplaces.amazon !== (existingMarketplaces.amazon || '')) ||
-      (incomingMarketplaces.flipkart && incomingMarketplaces.flipkart !== (existingMarketplaces.flipkart || '')) ||
-      (incomingMarketplaces.meesho && incomingMarketplaces.meesho !== (existingMarketplaces.meesho || '')) ||
-      (input.amazon_url && input.amazon_url !== (existingProduct?.amazon_url || '')) ||
-      (input.flipkart_url && input.flipkart_url !== (existingProduct?.flipkart_url || '')) ||
-      (input.meesho_url && input.meesho_url !== (existingProduct?.meesho_url || ''))
-    ) {
-      rejectedMarketplaceAttempt = true;
-    }
-  }
-
   let finalMarketplaces: Record<string, string> = {};
-  if (isSuper) {
+  if (canManageMarketplaces) {
     finalMarketplaces = {
       amazon: typeof incomingMarketplaces.amazon === 'string' ? incomingMarketplaces.amazon.trim() : (existingMarketplaces.amazon || ''),
       flipkart: typeof incomingMarketplaces.flipkart === 'string' ? incomingMarketplaces.flipkart.trim() : (existingMarketplaces.flipkart || ''),
       meesho: typeof incomingMarketplaces.meesho === 'string' ? incomingMarketplaces.meesho.trim() : (existingMarketplaces.meesho || ''),
     };
   } else if (!isCreate && existingProduct) {
-    // Preserve existing trusted marketplace URLs for Product Manager updates
     finalMarketplaces = {
       amazon: existingMarketplaces.amazon || (existingProduct.amazon_url as string) || '',
       flipkart: existingMarketplaces.flipkart || (existingProduct.flipkart_url as string) || '',
       meesho: existingMarketplaces.meesho || (existingProduct.meesho_url as string) || '',
     };
   } else {
-    // Empty for new products created by Product Manager
     finalMarketplaces = {};
   }
 
@@ -184,7 +168,11 @@ export function sanitizeProductFieldsForRole(
     featured,
   };
 
-  if (!isSuper) {
+  if (canManageMarketplaces) {
+    if (finalMarketplaces.amazon) sanitized.amazon_url = finalMarketplaces.amazon;
+    if (finalMarketplaces.flipkart) sanitized.flipkart_url = finalMarketplaces.flipkart;
+    if (finalMarketplaces.meesho) sanitized.meesho_url = finalMarketplaces.meesho;
+  } else {
     if (isCreate) {
       delete sanitized.amazon_url;
       delete sanitized.flipkart_url;
@@ -194,10 +182,6 @@ export function sanitizeProductFieldsForRole(
       sanitized.flipkart_url = existingProduct.flipkart_url;
       sanitized.meesho_url = existingProduct.meesho_url;
     }
-  } else {
-    if (finalMarketplaces.amazon) sanitized.amazon_url = finalMarketplaces.amazon;
-    if (finalMarketplaces.flipkart) sanitized.flipkart_url = finalMarketplaces.flipkart;
-    if (finalMarketplaces.meesho) sanitized.meesho_url = finalMarketplaces.meesho;
   }
 
   const result = {
