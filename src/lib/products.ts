@@ -13,8 +13,8 @@ import {
   QueryDocumentSnapshot
 } from 'firebase/firestore';
 
-const STORAGE_KEY_PRODUCTS = 'lll_products_v4';
-const STORAGE_KEY_CATEGORIES = 'lll_categories_v4';
+const STORAGE_KEY_PRODUCTS = 'lll_products_v5';
+const STORAGE_KEY_CATEGORIES = 'lll_categories_v5';
 
 // In-memory cache for fast SSR / hydration
 let memoryProducts: Product[] = [...INITIAL_PRODUCTS];

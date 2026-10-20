@@ -115,8 +115,8 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
   ) => {
     await trackMarketplaceClick(product.id, product.name, marketplace, 'product_details');
     setClickNotice(`Redirecting to official ${marketplace.toUpperCase()} listing...`);
-    setTimeout(() => setClickNotice(null), 4000);
-    window.open(url, '_blank', 'noopener,noreferrer');
+    const targetUrl = url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
+    window.open(targetUrl, '_blank', 'noopener,noreferrer');
   };
 
   const relatedProducts = allProducts

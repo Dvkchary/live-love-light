@@ -134,11 +134,11 @@ export default function CustomerPortalPage() {
 
   // Category thumbnail images mapping
   const categoryImages: Record<string, string> = {
-    'Teddy Candles': '/images/teddy - Royal oud.jpeg',
-    'Flower Candles': '/images/daisy - jasmine.jpeg',
-    'Rose Candles': '/images/peony - jamsine & Royal oud.jpeg',
+    'Teddy Candles': '/images/meesho-teddy-premium.jpg',
+    'Flower Candles': '/images/meesho-daisy-flowers.jpg',
+    'Rose Candles': '/images/meesho-hand-in-hand.jpg',
     'Fragrance Candles': '/images/jar - rayal oud.jpeg',
-    'Decorative Candles': '/images/lotus - sandlewood.jpeg',
+    'Decorative Candles': '/images/meesho-mini-heart.jpg',
     'Gift Collections': '/images/logo.jpeg',
   };
 

@@ -89,7 +89,7 @@ export default function Hero() {
                     <p className="font-serif-luxury font-bold text-[#231B15] text-lg leading-tight">
                       Royal Oud & Amber Jar
                     </p>
-                    <p className="text-xs text-[#786C63] mt-0.5">₹549 • 65 Hours Burn Time</p>
+                    <p className="text-xs text-[#786C63] mt-0.5">₹200 • 65 Hours Burn Time</p>
                   </div>
                   <Link
                     href="/product/amber-glass-jar-candle-royal-oud"

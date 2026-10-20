@@ -188,7 +188,7 @@ export const INITIAL_PRODUCTS: Product[] = [
       base: 'Clean White Musk'
     },
     price: 193,
-    originalPrice: 198,
+    originalPrice: 299,
     currency: 'INR',
     category: 'Flower Candles',
     images: [
@@ -219,7 +219,7 @@ export const INITIAL_PRODUCTS: Product[] = [
       base: 'Warm Musk, Sandalwood'
     },
     price: 288,
-    originalPrice: 296,
+    originalPrice: 449,
     currency: 'INR',
     category: 'Rose Candles',
     images: [
@@ -250,7 +250,7 @@ export const INITIAL_PRODUCTS: Product[] = [
       base: 'Earthy Calm, White Musk'
     },
     price: 242,
-    originalPrice: 249,
+    originalPrice: 399,
     currency: 'INR',
     category: 'Flower Candles',
     images: [
@@ -281,7 +281,7 @@ export const INITIAL_PRODUCTS: Product[] = [
       base: 'Cozy Musk, Amber'
     },
     price: 156,
-    originalPrice: 160,
+    originalPrice: 299,
     currency: 'INR',
     category: 'Teddy Candles',
     images: [
@@ -312,7 +312,7 @@ export const INITIAL_PRODUCTS: Product[] = [
       base: 'Soft Musk, Light Vanilla'
     },
     price: 194,
-    originalPrice: 199,
+    originalPrice: 349,
     currency: 'INR',
     category: 'Decorative Candles',
     images: [
