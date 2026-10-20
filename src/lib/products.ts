@@ -13,8 +13,8 @@ import {
   QueryDocumentSnapshot
 } from 'firebase/firestore';
 
-const STORAGE_KEY_PRODUCTS = 'lll_products_v2';
-const STORAGE_KEY_CATEGORIES = 'lll_categories_v2';
+const STORAGE_KEY_PRODUCTS = 'lll_products_v3';
+const STORAGE_KEY_CATEGORIES = 'lll_categories_v3';
 
 // In-memory cache for fast SSR / hydration
 let memoryProducts: Product[] = [...INITIAL_PRODUCTS];
@@ -26,9 +26,20 @@ export function getLocalProducts(): Product[] {
     const raw = localStorage.getItem(STORAGE_KEY_PRODUCTS);
     if (raw) {
       const parsed: Product[] = JSON.parse(raw);
-      // If legacy images (like 01-handcrafted-candles) are present, refresh to given images
-      const hasOldImages = parsed.some(p => p.images?.some(img => img.includes('.png')));
-      if (Array.isArray(parsed) && parsed.length > 0 && !hasOldImages) {
+      // If legacy images (like .png or old filenames without price suffix) are present, refresh
+      const OLD_IMAGE_PATHS = [
+        '/images/teddy - Royal oud.jpeg',
+        '/images/daisy - jasmine.jpeg',
+        '/images/peony - jamsine & Royal oud.jpeg',
+        '/images/lotus - sandlewood.jpeg',
+        '/images/jar - rayal oud.jpeg',
+      ];
+      const hasOldImages = parsed.some(p =>
+        p.images?.some(img => img.includes('.png') || OLD_IMAGE_PATHS.includes(img))
+      );
+      // Also refresh if any product from INITIAL_PRODUCTS is missing (e.g. new flower candle)
+      const hasAllProducts = INITIAL_PRODUCTS.every(ip => parsed.some(p => p.id === ip.id));
+      if (Array.isArray(parsed) && parsed.length > 0 && !hasOldImages && hasAllProducts) {
         memoryProducts = parsed;
         return parsed;
       }
